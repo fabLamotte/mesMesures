@@ -1,0 +1,75 @@
+{% extends 'base2.html.twig' %}
+
+{% block title %}Mesure | Profil{% endblock %}
+
+{% block stylesheets %}
+    <style>
+        .block_chart{
+            width:400px !important;
+            height:500px !important;
+            border:1px solid black;
+            padding:30px;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+
+    <div class="block_chart">
+        <div class="block-choice">
+            <select>
+                {% for name in names %}   
+                    <option class="link-cible" data-name="{{ name }}">{{ name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <canvas id="myChart" width="200" height="200"></canvas>
+    </div>
+
+{% endblock %}
+
+
+{% block javascripts %}
+    <script src="{{ asset('js/jquery.js') }}" type="text/javascript"></script>
+    <script src="{{ asset('js/chart.js') }}"></script>
+    <script>
+        var ctx = document.getElementById('myChart').getContext('2d');
+        $(document).ready(function(){
+            var cible = "Bras";
+            $.ajax({
+                type:'POST',
+                url:'{{ path('reload_chart') }}',
+                data:{cible:'Biceps'},
+                success: function(response){
+                    loadChart(response);
+                }
+            });
+        });
+
+        $(document).on('click', '.link-cible', function(){
+            var cible = $(this).attr('data-name');
+            $.ajax({
+                type:'POST',
+                url:'{{ path('reload_chart') }}',
+                data:{cible:cible},
+                success: function(response){
+                    loadChart(response);
+                }
+            });
+        });
+
+        function loadChart(response){
+            var myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: response[0],
+                    datasets: [{
+                        label: 'Mensurations',
+                        backgroundColor: '#cd1e1e',
+                        data: response[1]
+                    }]
+                },
+            });
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>{% block title %}Welcome!{% endblock %}</title>
+        <style>
+            html, body, nav, ul{
+                padding:0;
+                margin:0;
+            }
+            nav{
+                background: #f77801;
+                height:70px;
+            }
+            ul {
+                list-style-type:none;
+                display:flex;
+                justify-content:space-between;
+                padding:0 15px 0 15px;
+                height:100%;
+                align-items:center;
+            }
+            ul div{
+                display:flex;
+                justify-content:space-between;
+            }
+            li{
+                margin:0 15px 0 15px;
+            }
+            li a{
+                text-decoration:none;
+                text-transform:uppercase;
+                color:white;
+            }
+        </style>
+        {% block stylesheets %}{% endblock %}
+
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <div>
+                    <li><a href="{{ path('profil') }}">Mon profil</a></li>
+                    <li><a href="{{ path('mesure') }}">Mes mesures</a></li>
+                </div>
+                <div>
+                    <li><a href="{{ path('app_logout') }}">Déconnexion</a></li>
+                </div>
+            </ul>
+        </nav>
+        {% block body %}{% endblock %}
+        {% block javascripts %}{% endblock %}
+    </body>
+</html>
