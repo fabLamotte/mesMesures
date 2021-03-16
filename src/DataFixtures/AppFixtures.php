@@ -12,8 +12,10 @@ use DateTime;
 
 class AppFixtures extends Fixture
 {
+    private $encoder;
+
     public function __construct(UserPasswordEncoderInterface $encoder) {
-        $this->encode = $encoder;
+        $this->encoder = $encoder;
     }
 
     public function load(ObjectManager $manager)
@@ -57,7 +59,7 @@ class AppFixtures extends Fixture
             $manager->persist($cible6);
             
             $cible7 = new Mesures();
-            $cible7->setName('Tour de taille');
+            $cible7->setName('Taille');
             $cible7->setDescription('Ventre ni rentré ni sorti mais plat, mesurer au plus petit, vers le nombril');
             $cible7->setImage('https://cache.magicmaman.com/data/photo/w800_c18/45/tour-de-taille.jpg');
             $manager->persist($cible7);
@@ -86,5 +88,61 @@ class AppFixtures extends Fixture
             $cible11->setImage('https://i.ytimg.com/vi/SKZVcWWlnEY/maxresdefault.jpg');
             $manager->persist($cible11);
             $manager->flush();
+
+            $noemie = new User();
+            $noemie->setFirstname('Noemie');
+            $noemie->setLastname('Melchilsen');
+            $noemie->setEmail('noemiemelchilsen14@gmail.com');
+            $noemie->setImageProfil("");
+            $noemie->setPassword($this->encoder->encodePassword($noemie, 'Platinum#00'));
+            $noemie->setDateNaissance(new \DateTime('1999-01-29 00:00:00'));
+            $noemie->setLastname('Melchilsen');
+            $manager->persist($noemie);
+            $manager->flush();
+
+            $tab = [
+                [$cible7, $noemie, '2021-01-22 00:00:00', 96],
+                [$cible3, $noemie, '2021-01-22 00:00:00', 90],
+                [$cible11, $noemie, '2021-01-22 00:00:00', 118],
+                [$cible8, $noemie, '2021-01-22 00:00:00', 66],
+                [$cible4, $noemie, '2021-01-22 00:00:00', 32],
+                [$cible7, $noemie, '2021-01-27 00:00:00', 92],
+                [$cible3, $noemie, '2021-01-27 00:00:00', 88],
+                [$cible11, $noemie, '2021-01-27 00:00:00', 112],
+                [$cible8, $noemie, '2021-01-27 00:00:00', 65],
+                [$cible4, $noemie, '2021-01-27 00:00:00', 31],
+                [$cible7, $noemie, '2021-01-31 00:00:00', 91],
+                [$cible3, $noemie, '2021-01-31 00:00:00', 87],
+                [$cible11, $noemie, '2021-01-31 00:00:00', 110],
+                [$cible8, $noemie, '2021-01-31 00:00:00', 65],
+                [$cible4, $noemie, '2021-01-31 00:00:00', 31],
+                [$cible7, $noemie, '2021-02-19 00:00:00', 87],
+                [$cible3, $noemie, '2021-02-19 00:00:00', 85],
+                [$cible11, $noemie, '2021-02-19 00:00:00', 109],
+                [$cible8, $noemie, '2021-02-19 00:00:00', 63],
+                [$cible4, $noemie, '2021-02-19 00:00:00', 31],
+                [$cible7, $noemie, '2021-02-28 00:00:00', 86],
+                [$cible3, $noemie, '2021-02-28 00:00:00', 85],
+                [$cible11, $noemie, '2021-02-28 00:00:00', 108],
+                [$cible8, $noemie, '2021-02-28 00:00:00', 62.5],
+                [$cible4, $noemie, '2021-02-28 00:00:00', 31],
+                [$cible7, $noemie, '2021-03-06 00:00:00', 86],
+                [$cible3, $noemie, '2021-03-06 00:00:00', 85],
+                [$cible11, $noemie, '2021-03-06 00:00:00', 109],
+                [$cible8, $noemie, '2021-03-06 00:00:00', 62],
+                [$cible4, $noemie, '2021-03-06 00:00:00', 31],
+            ];
+
+            foreach($tab as $t){
+                $inscription_mesure = new InscriptionMesure();
+                $inscription_mesure->setDate(new \DateTime($t[2]));
+                $inscription_mesure->setCm($t[3]);
+                $inscription_mesure->setMesures($t[0]);
+                $inscription_mesure->setUser($t[1]);
+                $manager->persist($inscription_mesure);
+            }
+            $manager->flush();
+
+
     }
 }

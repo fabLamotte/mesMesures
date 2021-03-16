@@ -8,7 +8,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
 use App\Entity\InscriptionMesure;
-use App\Entity\User;
 use App\Entity\Mesures;
 
 
@@ -19,19 +18,19 @@ class ProfilController extends AbstractController
      */
     public function index(): Response
     {
+        // Vérification d'une connexion d'un user
+            if($this->getUser() == null){
+                return $this->redirectToRoute("");
+            } 
+
         $em = $this->getDoctrine()->getManager();
         $user = $this->getUser();
         $cibles = $em->getRepository(InscriptionMesure::class)->findBy(['user' => $user]);
-        $names = [];
 
-        foreach($cibles as $c){
-            if(!in_array($c->getMesures()->getName(), $names)){
-                array_push($names, $c->getMesures()->getName());
-            }
-        }
-        sort($names);
+
+        
         return $this->render('profil/index.html.twig', [
-            'names'    => $names
+            'user'     => $user
         ]);
     }
 

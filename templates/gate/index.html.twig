@@ -1,9 +1,33 @@
 {% extends 'base.html.twig' %}
-
 {% block title %}Mesmesures | Accueil{% endblock %}
+{% block stylesheets %}
+    <style>
+        .block-buttons{
+            display:flex;
+            justify-content:center;
+        }
+        button{
+            padding: 25px 50px 25px 50px;
+            background: #5F5F5F;
+            cursor:pointer;
+            border:none;
+            outline:none;
+            border-radius:8px;
+            box-shadow: 4px 1px 8px 5px #222222;
+            text-transform:uppercase;
+            color: white;
+            font-weight:bold;
+            transition:background 0.2s ease;
+            margin:5px;
+        }
+        button:hover{
+            background:#767676;
+        }
+    </style>
+{% endblock %}
 
 {% block body %}
-    <div>
+    <div class="block-buttons">
         <a href="{{ path('app_login') }}"><button>Connexion</button></a>
         <a href="{{ path('registration') }}"><button>Inscription</button></a>
     </div>

@@ -1,22 +1,43 @@
 {% extends 'base.html.twig' %}
 
 {% block title %}Mesmesures | Connexion{% endblock %}
+{% block stylesheets %}
 
+<style>
+    .block-form{ border:2px solid white; border-radius:8px; padding:20px 50px 50px 50px; }
+    .block-form .block-title{ width:100%; border-bottom: 2px solid white; margin-bottom:15px; color: #E3890E; text-align:left; }
+    .block-form .block-title a{ color:white; text-decoration:none; }
+    .block-form form{ text-align:center; }
+    .block-form form input{ outline:none; border:none; margin:1px; width:90%; padding:10px; border-radius:5px; }
+    .block-form form button{ padding:15px; font-weight:bold; border:none; outline:none; border-radius: 5px; cursor:pointer; transition: background 0.2s ease; }
+    .block-form form button:hover{ background:#cbcbcb; }
+    .block-form form div:last-child{ display:flex; justify-content:space-between; width:100%; }
+    .block-form form div:last-child a{ text-decoration:none; color:white; margin-left:5px; }
+</style>
+
+{% endblock %}
 {% block body %}
-<form method="post">
-
-    <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
-    <label for="inputEmail">Email</label>
-    <input type="email" value="{{ last_username }}" name="email" id="inputEmail" class="form-control" required autofocus>
-    <label for="inputPassword">Password</label>
-    <input type="password" name="password" id="inputPassword" class="form-control" required>
-
-    <input type="hidden" name="_csrf_token"
-           value="{{ csrf_token('authenticate') }}"
-    >
-
-    <button class="btn btn-lg btn-primary" type="submit">
-        Sign in
-    </button>
-</form>
+<div class="block-form">
+    <div class="block-title">
+        <h2>Se connecter</h2>
+        <a href="{{ path('registration') }}">S'inscrire</a>
+    </div>
+    <form method="post">
+        <div>
+            <input type="email" placeholder="Adresse mail" value="{{ last_username }}" name="email" id="inputEmail" class="form-control" required autofocus>
+        </div>
+        <div>
+            <input type="password" placeholder="Mot de passe" name="password" id="inputPassword" class="form-control" required>
+        </div>
+        <input type="hidden" name="_csrf_token"
+            value="{{ csrf_token('authenticate') }}"
+        >
+        <div>
+            <a href="{{ path('forgot_passord') }}">Mot de passe oublié</a>
+            <button class="btn btn-lg btn-primary" type="submit">
+                Se connecter
+            </button>
+        </div>
+    </form>
+</div>
 {% endblock %}

@@ -34,6 +34,46 @@ class User implements UserInterface
      */
     private $password;
 
+
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $password_change_asked;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $firstname;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $lastname;
+
+    /**
+     * @ORM\Column(type="datetime")
+     */
+    private $date_naissance;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $image_profil;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $tokenRecover;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $weightGoal;
+
+    public function __construct(){
+        $this->password_change_asked = false;
+    }
+
     public function getId(): ?int
     {
         return $this->id;
@@ -109,5 +149,89 @@ class User implements UserInterface
     {
         // If you store any temporary, sensitive data on the user, clear it here
         // $this->plainPassword = null;
+    }
+
+    public function getPasswordChangeAsked(): ?bool
+    {
+        return $this->password_change_asked;
+    }
+
+    public function setPasswordChangeAsked(bool $password_change_asked): self
+    {
+        $this->password_change_asked = $password_change_asked;
+
+        return $this;
+    }
+
+    public function getFirstname(): ?string
+    {
+        return $this->firstname;
+    }
+
+    public function setFirstname(string $firstname): self
+    {
+        $this->firstname = $firstname;
+
+        return $this;
+    }
+
+    public function getLastname(): ?string
+    {
+        return $this->lastname;
+    }
+
+    public function setLastname(string $lastname): self
+    {
+        $this->lastname = $lastname;
+
+        return $this;
+    }
+
+    public function getDateNaissance(): ?\DateTimeInterface
+    {
+        return $this->date_naissance;
+    }
+
+    public function setDateNaissance(\DateTimeInterface $date_naissance): self
+    {
+        $this->date_naissance = $date_naissance;
+
+        return $this;
+    }
+
+    public function getImageProfil(): ?string
+    {
+        return $this->image_profil;
+    }
+
+    public function setImageProfil(?string $image_profil): self
+    {
+        $this->image_profil = $image_profil;
+
+        return $this;
+    }
+
+    public function getTokenRecover(): ?string
+    {
+        return $this->tokenRecover;
+    }
+
+    public function setTokenRecover(?string $tokenRecover): self
+    {
+        $this->tokenRecover = $tokenRecover;
+
+        return $this;
+    }
+
+    public function getWeightGoal(): ?string
+    {
+        return $this->weightGoal;
+    }
+
+    public function setWeightGoal(?string $weightGoal): self
+    {
+        $this->weightGoal = $weightGoal;
+
+        return $this;
     }
 }

@@ -2,8 +2,24 @@
 
 {% block title %}Mesmesures | Inscription{% endblock %}
 
+{% block stylesheets %}
+    <style>
+        .block-form{ border:2px solid white; border-radius:8px; padding:20px 50px 50px 50px; }
+        .block-form .block-title{ width:100%; border-bottom: 2px solid white; margin-bottom:15px; color: #E3890E; text-align:left; }
+        .block-form .block-title a{ color:white; text-decoration:none; }
+        .block-form form{ text-align:center; color:white; }
+        .block-form form input{ outline:none; border:none; margin:1px; width:90%; padding:10px; border-radius:5px; }
+        .block-form form button{ padding:15px; font-weight:bold; border:none; outline:none; border-radius: 5px; cursor:pointer; transition: background 0.2s ease; }
+        .block-form form button:hover{ background:#cbcbcb; }
+        .block-form form div:last-child{ text-align:end; }
+    </style>
+{% endblock %}  
 {% block body %}
-    <div>
-        {{form(formRegistration)}}
-    </div>
+        <div class="block-form">
+            <div class="block-title">
+                <h2>Inscription</h2>
+                <a href="{{ path('app_login') }}">Se connecter</a>
+            </div>
+            {{form(formRegistration)}}
+        </div>
 {% endblock %}

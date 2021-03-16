@@ -1,54 +1,100 @@
 <!DOCTYPE html>
-<html>
+<html class="p-5 m-0">
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{% block title %}Welcome!{% endblock %}</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous" />
+        <link rel="stylesheet" href="{{ asset('font/font-awesome/css/font-awesome.min.css') }}" />
         <style>
-            html, body, nav, ul{
-                padding:0;
-                margin:0;
-            }
-            nav{
-                background: #f77801;
-                height:70px;
-            }
-            ul {
-                list-style-type:none;
-                display:flex;
-                justify-content:space-between;
-                padding:0 15px 0 15px;
-                height:100%;
-                align-items:center;
-            }
-            ul div{
-                display:flex;
-                justify-content:space-between;
-            }
-            li{
-                margin:0 15px 0 15px;
-            }
-            li a{
-                text-decoration:none;
-                text-transform:uppercase;
-                color:white;
-            }
+            @font-face { font-family: "gravtrac"; src: url("{{ asset('font/gravtrac condensed bd.ttf') }}"); }
+            header, section, footer { border:3px solid #22252C; }
+            html { background: #181C1F; height:100%; }
+            body { background: #22252C; height:100%; }
+            header, .bloc { background: #2F3642; }
+            nav li { transition: background 0.2s ease; border-left: 1px solid white !important; }
+            nav li.active { border-left: 3px solid #FF7000 !important; color: #FF7000; }
+            nav li.active i { border: 1px solid #FF7000 !important; }
+            nav li:hover { background: #3E4756; }
+            .custom-color { color: #FF7000 !important; font-family:'gravtrac'; }
         </style>
         {% block stylesheets %}{% endblock %}
-
     </head>
-    <body>
-        <nav>
-            <ul>
-                <div>
-                    <li><a href="{{ path('profil') }}">Mon profil</a></li>
-                    <li><a href="{{ path('mesure') }}">Mes mesures</a></li>
+    <body class="p-4 m-0 container-fluid row rounded">
+        <header class="col-xl-2 col-lg-3 col-md-3 col-sm-12 col-xs-12 rounded container-fluid row d-flex flex-column justify-content-between no-gutters p-3">
+            <div>
+                {# Information user #}
+                    <div class="col-12 text-center custom-color">
+                        {% if user.imageProfil is null %}
+                            <img src="{{ asset('image/inconnu.png') }}" class="bg bg-white rounded img-fluid" alt="photo de profil" title="photo de profil" width="250" height="250" />
+                        {% elseif user.imageProfil == "" %}
+                            <img src="{{ asset('image/inconnu.png') }}" class="bg bg-white rounded img-fluid" alt="photo de profil" title="photo de profil" width="250" height="250" />
+                        {% else %}
+                            <img src="" alt="photo de profil" title="photo de profil" width="250" height="250" />
+                        {% endif %}
+                        <h2 class="mt-2 mb-2">{{ user.lastname }} {{ user.firstname }}</h2>
+                    </div>
+                
+                {# Navigation #}
+                    <nav class="col-12" style="font-family:gravtrac;">
+                        <ul class="p-0 m-0">
+                            <a href="{{ path('profil') }}" class="text-decoration-none text-white">
+                                <li {% if app.request.get('_route') == 'profil' %} class="d-flex align-items-center justify-content-between p-2 active" {% else %}
+                                    class="d-flex align-items-center justify-content-between p-2"{% endif %}>
+                                    <i class="fa fa-user-o border rounded p-1" aria-hidden="true"></i>
+                                    <div>Profil</div>
+                                </li>
+                            </a>
+                            <a href="{{ path('mesure') }}" class="text-decoration-none text-white">
+                                <li {% if app.request.get('_route') == 'mesure' %} class="d-flex align-items-center justify-content-between p-2 active" {% else %}
+                                    class="d-flex align-items-center justify-content-between p-2"{% endif %}>
+                                    <i class="fa fa-pencil-square-o border rounded p-1" aria-hidden="true"></i>
+                                    Mesures
+                                </li>
+                            </a>
+                            <a href="" class="text-decoration-none text-white">
+                                <li {% if app.request.get('_route') == 'parametre' %} class="d-flex align-items-center justify-content-between p-2 active" {% else %}
+                                    class="d-flex align-items-center justify-content-between p-2"{% endif %}>
+                                    <i class="fa fa-wrench border rounded p-1" aria-hidden="true"></i>
+                                    <div>Paramètres</div>
+                                </li>
+                            </a>
+                            <a href="{{ path('app_logout') }}" class="text-decoration-none text-white">
+                                <li  class="d-flex align-items-center justify-content-between p-2">
+                                    <i class="fa fa-sign-out border rounded p-1" aria-hidden="true"></i>
+                                    Déconnexion
+                                </li>
+                            </a>
+                        </ul>
+                    </nav>
+            </div>
+        </header>
+        <content class="col-xl-10 col-lg-9 col-md-9 col-sm-12 col-xs-12 container-fluid no-gutters p-0 m-0">
+            {% block body %}{% endblock %}
+        </content>
+        <footer class="col-12 bloc container-fluid">
+            <div class="row no-gutters d-flex justify-content-between align-items-center" style="height:100%;">
+                <div class="col-12">
+                    <div class="text-center text-white"> Développé par Fabien Lamotte </div>
+                    <ul class="d-flex justify-content-center list-unstyled">
+                        <a href="https://www.linkedin.com/in/fabien-lamotte-305043200/" target="_blank">
+                            <li class="text-decoration-none">
+                                <img src="{{ asset('image/linkedin.png') }}" alt="Linkedin" title="Linkedin" width="50" height="50" />
+                            </li>
+                        </a>
+                        <a href="https://github.com/fabLamotte" target="_blank">
+                            <li class="list-style-type-none text-decoration-none">
+                                <img src="{{ asset('image/github.png') }}" alt="Github" title="Github" width="50" height="50" />
+                            </li>
+                        </a>
+                    </ul>
                 </div>
-                <div>
-                    <li><a href="{{ path('app_logout') }}">Déconnexion</a></li>
-                </div>
-            </ul>
-        </nav>
-        {% block body %}{% endblock %}
+            </div>
+        </footer>
+        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
         {% block javascripts %}{% endblock %}
-    </body>
+</body>
 </html>
+{# #}

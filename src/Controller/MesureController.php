@@ -9,7 +9,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 use App\Entity\Mesures;
 use App\Entity\InscriptionMesure;
-use DateTime;
+use \DateTime;
 
 
 class MesureController extends AbstractController
@@ -20,52 +20,67 @@ class MesureController extends AbstractController
      */
     public function mesure(): Response
     {
+        // Vérification d'une connexion d'un user
+            if($this->getUser() == null){
+                return $this->redirectToRoute("");
+            } 
+            
         $em = $this->getDoctrine()->getManager();
-        $mesures = $em->getRepository(Mesures::class)->findAll();
+        $user = $this->getUser();
+        $mesures = $em->getRepository(Mesures::class)->findAll(); // Recherche de toutes les zones cibles
+
+        $data = $em->getRepository(InscriptionMesure::class)->findLastDataByUser($this->getUser());
+        $lastTime = 0;
+        $wait = [];
+
+        foreach($data as $last){
+            $timestamp = strtotime($last->getDate()->format('Y-m-d'));
+            if($timestamp >= $lastTime){
+                $lastTime = $timestamp;                     //  Timestamp de la derniere inscription
+                $une_semaine = 60*60*24*7;                  //  Nombre de secondes que fait une semaine
+                $timestamp_du_jour = strtotime('now');      //  Timestamp aujourd'hui
+                if(($timestamp + $une_semaine) > $timestamp_du_jour){   // S'il ne s'est pas écoulé plus d'une semaine depuis la dernière inscription
+                    $wait[] = $last->getMesures()->getName();           // On ajoute la zone du corps au tableau des zone indisponible
+                }
+            }
+        }
+
         return $this->render('mesure/mesure.html.twig', [
-            'mesures' => $mesures,
+            'mesures'   => $mesures,
+            'user'      => $user,
+            'wait'      => $wait,
+            'nbMesure'  => count($wait),
         ]);
     }
 
     /**
-     * @Route("ajout_mesure_ajax",name="ajout_mesure_ajax",options={"expose"=true})
+     * @Route("/nouvelle_mesure", name="nouvelle_mesure", options={"expose"=true})
      */
-    public function ajoutMesureAjax(Request $request){  
-        // récupération des variables
+    public function nouvelle_mesure(Request $request){
+        $mesures = $request->request->get('array');
         $em = $this->getDoctrine()->getManager();
-        $user = $this->getUser();
-        $dateDuJour = new DateTime();
-        $bras = $request->request->get('bras');
-        $ventre = $request->request->get('ventre');
-        $hanches = $request->request->get('hanches');
-        $cuisses = $request->request->get('cuisses');
-        $genou = $request->request->get('genou');
+        $date = new \DateTime();
+        $confirmed = [];
         $errors = 0;
-        $regex = '/^[0-9.]{1,8}$/';
-
-        $tab = [["name" => 'Bras',"value" => $bras],["name" => 'Ventre',"value" => $ventre],["name" => 'Hanches',"value" => $hanches],["name" => 'Cuisses',"value" => $cuisses],["name" => 'Genou',"value" => $genou],];
-
-        foreach($tab as $t){
-            if(preg_match($regex, $t['value']) && $t['value'] != null){
-                $inscription_mesure = new InscriptionMesure();
-                $mesure = $em->getRepository(Mesures::class)->findOneby(['name' => $t['name']]);
-                $inscription_mesure->setDate($dateDuJour);
-                $inscription_mesure->setCm($t['value']);
-                $inscription_mesure->setMesures($mesure);
-                $inscription_mesure->setUser($user);
-                $em->persist($inscription_mesure);
-            } else {
-                $errors ++;
-            }
+        
+        foreach($mesures as $mesure => $data){
+            if(isset($data[1])){
+                if($data[1] != ""){
+                    $new_donnees = new InscriptionMesure();
+                    $mesur = $em->getRepository(Mesures::class)->findOneBy(['name' => $data[0]]);
+                    $new_donnees->setMesures($mesur);
+                    $new_donnees->setCm(intval($data[1]));
+                    $new_donnees->setUser($this->getUser());
+                    $new_donnees->setDate($date);
+                    $em->persist($new_donnees);
+                    $confirmed[] = $data[0];
+                } else {
+                    $errors++;
+                }
+            } 
         }
+        $em->flush();
 
-        if($errors === 0){
-            // Enregistrement et retour ajax
-            $em->flush();
-            return $this->json('good');
-        } else {
-            // On enregistre pas les informations et on retourne les erreurs
-            return $this->json('error');
-        }
+        return $this->json([$confirmed, $errors]);
     }
 }

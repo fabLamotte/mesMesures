@@ -4,96 +4,174 @@
 
 {% block stylesheets %}
     <style>
-        .border-style { border-radius:10px; box-shadow: 4px 1px 8px 5px #bdbdbd; }
-
-        .listing { display:flex; justify-content:center; flex-wrap:wrap; }
-        .card { width:15%; height:370px; margin:20px; padding: 10px; }
-        .card .card-title { text-align:center; border-bottom:0.5px solid grey; text-transform:uppercase; font-weight:bold; }
-        .card .card-img img { width:100%; height:250px; margin-top:10px; }
-        .card .card-description { text-align:center; }
-
-        .nouvelleMesure { width:100%; height: 420px; display:flex; justify-content:center; }
-        .nouvelleMesure div { width:20%; padding:5px; }
-        .nouvelleMesure .title { width:97%; text-align:center; border-bottom:1px solid grey; }
-        .nouvelleMesure .form { width:100%; }
-        .nouvelleMesure .form h2 { font-size: 13px; }
-        .nouvelleMesure .submit{ display:flex; justify-content:end; width:90%; }
-        .nouvelleMesure .submit button{ border:1px solid grey; padding:10px 15px 10px 15px; cursor:pointer; background:white; border-radius:5px; box-shadow:3px 3px 10px grey; 
-                                        transition: background 0.1s ease; }
-        .nouvelleMesure .submit button:hover{ background:#e4e4e4; }
-        svg path, svg rect{ fill: #FF6700 ;}
+        section { height:100%; overflow:auto; max-height:600px; }
+        .block-image .image-taille { cursor:pointer; transition: opacity 0.2s ease; height: 100px; }
+        .block-image .image-taille:hover { opacity:0.6; }
+        .block-image .check { display:none; bottom: 0; right: 0; }
+        .block-image .check.active { display:block; }
+        .block-image span { display:none; right:0; top:-10px; background: #181C1F; border:2px solid white; color:white; padding:0 5px 0 5px; width:100%; font-family: "gravtrac"; }
+        .block-image span.active { display:block; }
+        .block-image.disabled { opacity:0.4; }
+        .border-orange { border:1px solid #FF7000; transition: border 0.2s ease; }
+        .border-orange:hover { border: 3px solid #FF7000; }
+        #loading-spinner { display: inline; position: relative; z-index: 999999; }
+        #loading-spinner .spin-icon { margin: auto; width: 40px; height: 40px; border: solid 3px transparent; border-top-color: #666; border-left-color: #666; border-radius: 80px; -webkit-animation: loading-spinner 500ms linear infinite; -moz-animation:    loading-spinner 500ms linear infinite; -ms-animation:     loading-spinner 500ms linear infinite; -o-animation:      loading-spinner 500ms linear infinite; animation:         loading-spinner 500ms linear infinite; }
+        @-webkit-keyframes loading-spinner { 0%   { -webkit-transform: rotate(0deg);   transform: rotate(0deg); } 100% { -webkit-transform: rotate(360deg); transform: rotate(360deg); } }
+        @-moz-keyframes loading-spinner { 0%   { -moz-transform: rotate(0deg);   transform: rotate(0deg); } 100% { -moz-transform: rotate(360deg); transform: rotate(360deg); } }
+        @-o-keyframes loading-spinner { 0%   { -o-transform: rotate(0deg);   transform: rotate(0deg); } 100% { -o-transform: rotate(360deg); transform: rotate(360deg); } }
+        @-ms-keyframes loading-spinner { 0%   { -ms-transform: rotate(0deg);   transform: rotate(0deg); } 100% { -ms-transform: rotate(360deg); transform: rotate(360deg); } }
+        @keyframes loading-spinner { 0%   { transform: rotate(0deg);   transform: rotate(0deg); } 100% { transform: rotate(360deg); transform: rotate(360deg); } }
     </style>
 {% endblock %}
 {% block body %}
-    <div class="listing">
-        {% for mesure in mesures %}
-            <div class="card border-style">
-                <div class="card-title">{{ mesure.name }}</div>
-                <div class="card-img"><img src="{{ mesure.image }}" title="mesure-{{ mesure.name }}" alt="mesure-{{ mesure.name }}" /></div>
-                <div class="card-description">{{ mesure.description }}</div>
-            </div>
-        {% endfor %}
-    </div>
-    <div class="nouvelleMesure"> 
-        <div class="border-style">
-            <div class="title"><h2>Nouvelles mesures</h2></div>
-            <div class="form">
-                <div style="display:flex; justify-content: space-between; width:90%;"><h2>Bras</h2><input type="text" class="bras" /></div>
-                <div style="display:flex; justify-content: space-between; width:90%;"><h2>Ventre</h2><input type="text" class="ventre" /></div>
-                <div style="display:flex; justify-content: space-between; width:90%;"><h2>Hanches</h2><input type="text" class="hanches" /></div>
-                <div style="display:flex; justify-content: space-between; width:90%;"><h2>Cuisses</h2><input type="text" class="cuisses" /></div>
-                <div style="display:flex; justify-content: space-between; width:90%;"><h2>Genou</h2><input type="text" class="genou" /></div>
-                <div class="target-message-form"></div>
-                <div class="submit"><button type="submit" class="submit-form">Enregistrer</button></div>
-            </div>
+    <section class="m-0 p-0 bloc rounded">
+        <div class="row col-12 d-flex justify-content-center mt-3 text-white" style="font-family: 'gravtrac'; font-size:18px;">
+            <p>Il vous reste <span class="nombre-mesures"> {{ mesures|length - nbMesure }} </span>/ {{ mesures|length }} mesures à renseigner</p>
         </div>
-    </div>
+        <div class="row d-flex justify-content-center mt-3 p-3">
+            {% for mesure in mesures %}
+                <div class="col-4 col-xl-1 col-lg-2 col-md-3 col-sm-3">
+                    <div {% if mesure.name in wait %}
+                            class="block-image text-center position-relative disabled" 
+                        {% else %}
+                            class="block-image text-center position-relative" 
+                        {% endif %}
+                        data-type="{{ mesure.name }}">
+                        <img src="{{ mesure.image }}" data-type="{{ mesure.name }}" alt="zone-corps" title="zone-corps p-2" 
+                            {% if mesure.name in wait %}
+                                class="image-taille img-fluid rounded border border-white p-1 img-fluid" 
+                            {% else %}
+                                class="image-taille img-fluid rounded border-orange p-1 img-fluid" 
+                            {% endif %}
+                        width="100" height="100" />
+                        <img src="{{ asset('image/check.png') }}" alt="check" title="check" class="check position-absolute img-fluid" width="20" height="20" />
+                        <span class="position-absolute rounded">{{ mesure.name }}</span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="row mt-5">
+            <form class="form-group offset-4 col-4 text-center">
+                <div class="message-form text-center"></div>
+                <div class="input-zone row p-2 text-center"></div>
+                <div class="submit-zone text-center"></div>
+            </form>
+        </div>
+    </section>
 {% endblock %}
 
 {% block javascripts %}
-
-    <script src="{{ asset('js/jquery.js') }}" type="text/javascript">
-    </script>
+    <script src="{{ asset('js/jquery.js') }}" type="text/javascript"></script>
     <script  type="text/javascript">
-        $('.submit-form').click(function(){
-            // Variables
-            var bras = $('input.bras').val();
-            var ventre = $('input.ventre').val();
-            var hanches = $('input.hanches').val();
-            var cuisses = $('input.cuisses').val();
-            var genou = $('input.genou').val();
-            var load = '<div id="bar-load" class="loader loader--style6" title="5"><svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"width="24px" height="30px" viewBox="0 0 24 30" style="enable-background:new 0 0 50 50;" xml:space="preserve"><rect x="0" y="13" width="4" height="5" fill="#333"><animate attributeName="height" attributeType="XML"values="5;21;5" begin="0s" dur="0.6s" repeatCount="indefinite" /><animate attributeName="y" attributeType="XML"values="13; 5; 13"begin="0s" dur="0.6s" repeatCount="indefinite" /></rect><rect x="10" y="13" width="4" height="5" fill="#333"><animate attributeName="height" attributeType="XML"values="5;21;5" begin="0.15s" dur="0.6s" repeatCount="indefinite" /><animate attributeName="y" attributeType="XML"values="13; 5; 13"begin="0.15s" dur="0.6s" repeatCount="indefinite" /></rect><rect x="20" y="13" width="4" height="5" fill="#333"><animate attributeName="height" attributeType="XML"values="5;21;5" begin="0.3s" dur="0.6s" repeatCount="indefinite" /><animate attributeName="y" attributeType="XML"values="13; 5; 13"begin="0.3s" dur="0.6s" repeatCount="indefinite" /></rect></svg></div>';
+        $(document).ready(function(){
+            blocImages = $('.block-image:not(.disabled)');
+            if(blocImages.length == 0){
+                $('form .message-form').append('<div class="text-success">Vous avez terminé vos mesures pour cette semaine</div>');
+            }
+        });
 
 
-            // Appel ajax
-            $.ajax({
-                type:"POST",
-                url:"{{ path('ajout_mesure_ajax') }}",
-                data: { bras:bras, ventre:ventre, hanches:hanches, cuisses:cuisses, genou:genou }, 
-                dataType:'json',
-                beforeSend: function(){
-                    // Lancement de l'animation
-                    $('.submit button').hide();
-                    $('.submit').append(load);
-                },
-                success: function(response){
-                    // Fermeture de l'animation
-                    $(document).find('#bar-load').remove();
-                    $('.submit button').show();
+        // Affichage du texte au survol de l'image
+            $('.block-image').hover(function(){
+                var cible = $(this).find('span');
+                cible.addClass('active');
+            });
 
-                    // Affichage du message de vérification du formulaire
-                    if(response === "good"){
-                        $('.target-message-form').empty();
-                        $('.target-message-form').css({"color":"green", "width":"90%", "text-align":"center"});
-                        $('.target-message-form').append('Les mesures ont été enregistrées avec succès');
-                    } else if (response === 'error') {
-                        $('.target-message-form').empty();
-                        $('.target-message-form').css({"color":"red", "width":"90%", "text-align":"center"});
-                        $('.target-message-form').append('Certains champs sont vides ou mal renseignés');
-                    }
+        // Arrêt d'affichage du texte au survol de l'image
+            $('.block-image').mouseout(function(){
+                var cible = $(this).find('span');
+                if(cible.hasClass('active')){
+                    cible.removeClass('active');
                 }
             });
-        });
-    </script>
 
+        // Attribution du label au clic de l'image
+            $('.block-image').click(function(){
+                var check = $(this).find('.check');
+                var image = $(this).find('.image-taille');
+                var form = $("form");
+                if(!$(this).hasClass('disabled')){
+                    if(check.hasClass('active')){
+                        image.css({"opacity" : "1"});
+                        check.removeClass('active');
+                        var input = $(document).find('input.' + image.attr('data-type'));
+                        input.remove();
+                    } else if(!check.hasClass('active')){
+                        image.css({"opacity" : "0.3"});
+                        check.addClass('active');
+                        var html = '<input type="text" class="col-12 text-center ' + image.attr('data-type') + ' form-control" placeholder=" ' + image.attr('data-type') + '" />';
+                        form.find('.input-zone').append(html);
+                    }
+                } 
+                
+                showSubmitButton();
+            });
+
+        // Apparition du boutton submit de formulaire
+            function showSubmitButton(){
+                var nbInputs = $(document).find('input').length;
+                var target = $(document).find('form .submit-zone');
+                if(nbInputs > 0){
+                    target.empty();
+                    target.append('<span class="btn btn-success submit-form">Enregistrer la sélection</span>');
+                } else {
+                    target.empty();
+                }
+            }
+
+        // au clic sur la validation du formulaire
+            $(document).on('click', '.submit-form', function(){
+                var Cou = ['Cou', $(document).find('input.Cou').val()];
+                var Epaules = ['Epaules', $(document).find('input.Epaules').val()];
+                var Pectoraux = ['Pectoraux', $(document).find('input.Pectoraux').val()];
+                var Biceps = ['Biceps', $(document).find('input.Biceps').val()];
+                var AvantBras = ['Avant-bras', $(document).find('input.Avant-bras').val()];
+                var Poignet = ['Poignet', $(document).find('input.Poignet').val()];
+                var Taille = ['Taille', $(document).find('input.Taille').val()];
+                var Cuisse = ['Cuisse', $(document).find('input.Cuisse').val()];
+                var Mollet = ['Mollet', $(document).find('input.Mollet').val()];
+                var Cheville = ['Cheville', $(document).find('input.Cheville').val()];
+                var Hanche = ['Hanche', $(document).find('input.Hanche').val()];
+                var array = [Cou, Epaules, Pectoraux, Biceps, AvantBras, Poignet, Taille, Cuisse, Mollet, Cheville, Hanche];
+
+                $.ajax({
+                    type:'post',
+                    url:'nouvelle_mesure',
+                    data: { array:array },
+                    beforeSend: function(){
+                        $(document).find('form .submit-form').hide();
+                        var html = '<div id="loading-spinner"><div class="spin-icon"></div></div>';
+                        $(document).find('.submit-zone').append(html);
+                    },
+                    success: function(response){
+                        $mesures_restantes = $('.nombre-mesures').html();
+                        $nouvelle_mesures_restantes = $mesures_restantes - response[0].length;
+                        $('.nombre-mesures').empty().append($nouvelle_mesures_restantes);
+
+                        // On désactive les images correctement renseignées
+                            $.each(response[0], function(id, value){
+                                $('.block-image[data-type="' + value + '"]').addClass('disabled'); 
+                                $(document).find('form input.' + value).remove();                 
+                            });
+
+                        // Mise en valeur des champs avec erreur + message
+                            if(response[1] > 0){
+                                $(document).find('form input').css({'border':'1px solid red'});
+                                $(document).find('form .message-form').empty().append('Certains champs sont vides ou mal inscrits.').removeClass('text-success').addClass('text-danger');
+                            } else {
+                                $(document).find('form .message-form').empty().append('Champs enregistrés avec succès').removeClass('text-danger').addClass('text-success');
+                            }
+                            
+                        // Suppression du spin load / Réapparition du boutton de validation
+                            $(document).find('form .submit-zone').empty().append('<span class="btn btn-success submit-form">Enregistrer la sélection</span>');
+
+                        // Si toutes les inscriptions sont terminées on affiche un message
+                            if($('.block-image:not(.disabled)').length == 0){
+                                $('form .message-form').append('<div class="text-success">Vous avez terminé vos mesures pour cette semaine</div>');
+                            }
+                    }
+                })
+            });
+
+    </script>
 {% endblock %}
