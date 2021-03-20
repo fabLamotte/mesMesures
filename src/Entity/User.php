@@ -198,7 +198,7 @@ class User implements UserInterface
 
         return $this;
     }
-
+    
     public function getImageProfil(): ?string
     {
         return $this->image_profil;

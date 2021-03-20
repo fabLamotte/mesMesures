@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="p-5 m-0">
+<html class="p-2 m-0">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -9,32 +9,40 @@
         <style>
             @font-face { font-family: "gravtrac"; src: url("{{ asset('font/gravtrac condensed bd.ttf') }}"); }
             header, section, footer { border:3px solid #22252C; }
-            html { background: #181C1F; height:100%; }
-            body { background: #22252C; height:100%; }
+            html { background: #181C1F; height:auto; }
+            body { background: #22252C; height:auto; }
             header, .bloc { background: #2F3642; }
-            nav li { transition: background 0.2s ease; border-left: 1px solid white !important; }
-            nav li.active { border-left: 3px solid #FF7000 !important; color: #FF7000; }
-            nav li.active i { border: 1px solid #FF7000 !important; }
-            nav li:hover { background: #3E4756; }
-            .custom-color { color: #FF7000 !important; font-family:'gravtrac'; }
+            header { height:800px; }
+            .large-menu nav li { transition: background 0.2s ease; border-left: 1px solid white !important; }
+            .large-menu nav li.active { border-left: 3px solid #ff5722 !important; color: #ff5722; }
+            .large-menu nav li.active i { border: 1px solid #ff5722 !important; }
+            .large-menu nav li:hover { background: #3E4756; }
+            .small-menu nav a { border-top:1px solid white; transition: border 0.2s ease; padding:2px 10px 2px 10px; transition: border 0.2s ease; }
+            .small-menu nav a.active{ border-top:3px solid #ff5722 !important; }
+            .small-menu nav a:hover { border-top:1px solid #181C1F;  }
+            .custom-color { color: #ff5722 !important; font-family:'gravtrac'; }
+            .bloc-image-profil { height:250px; margin:0; padding:0; cursor:pointer; }
+            .bloc-image-profil img{ z-index:1; transition:opacity 0.1s ease; height:auto; max-height:100%; }
+            .bloc-image-profil img.shadow{ opacity:0.4; }
+            .bloc-image-profil i{ z-index:2; display:none; font-size:60px; color: #ff5722; }
         </style>
         {% block stylesheets %}{% endblock %}
     </head>
-    <body class="p-4 m-0 container-fluid row rounded">
-        <header class="col-xl-2 col-lg-3 col-md-3 col-sm-12 col-xs-12 rounded container-fluid row d-flex flex-column justify-content-between no-gutters p-3">
-            <div>
-                {# Information user #}
+    <body class="p-2 m-0 container-fluid row rounded">
+        <header class="col-xl-2 col-lg-3 col-md-3 col-sm-12 d-none rounded container-fluid row d-flex flex-column justify-content-between no-gutters p-3">
+            <div class="d-none d-md-block large-menu">
+                {# PHOTO PROFIL USER #}
                     <div class="col-12 text-center custom-color">
-                        {% if user.imageProfil is null %}
-                            <img src="{{ asset('image/inconnu.png') }}" class="bg bg-white rounded img-fluid" alt="photo de profil" title="photo de profil" width="250" height="250" />
-                        {% elseif user.imageProfil == "" %}
-                            <img src="{{ asset('image/inconnu.png') }}" class="bg bg-white rounded img-fluid" alt="photo de profil" title="photo de profil" width="250" height="250" />
-                        {% else %}
-                            <img src="" alt="photo de profil" title="photo de profil" width="250" height="250" />
-                        {% endif %}
+                        <div class="position-relative bloc-image-profil d-flex justify-content-center no-gutters align-items-center" data-toggle="modal" data-target="#photo_profil_modal">
+                            {% if user.imageProfil == '' or user.imageProfil is null %}
+                                <img src="{{ asset('image/inconnu.png') }}" class="position-absolute bg bg-white rounded photo img-responsive" alt="photo de profil" title="photo de profil"  />
+                            {% else %}
+                                <img src="{{ asset('image/photo_profil/'~ user.imageProfil) }}" class="position-absolute bg bg-white rounded photo img-responsive" alt="photo de profil" title="photo de profil"  />
+                            {% endif %}
+                            <i class="fa fa-camera-retro rounded" aria-hidden="true"></i>
+                        </div>
                         <h2 class="mt-2 mb-2">{{ user.lastname }} {{ user.firstname }}</h2>
                     </div>
-                
                 {# Navigation #}
                     <nav class="col-12" style="font-family:gravtrac;">
                         <ul class="p-0 m-0">
@@ -68,6 +76,64 @@
                         </ul>
                     </nav>
             </div>
+            <div class="d-block d-md-none small-menu">
+                {# PHOTO PROFIL USER #}
+                    <div class="col-12 text-center custom-color">
+                        <div class="position-relative bloc-image-profil d-flex justify-content-center no-gutters align-items-center" data-toggle="modal" data-target="#photo_profil_modal">
+                            {% if user.imageProfil == '' or user.imageProfil is null %}
+                                <img src="{{ asset('image/inconnu.png') }}" class="position-absolute bg bg-white rounded photo img-responsive" alt="photo de profil" title="photo de profil"  />
+                            {% else %}
+                                <img src="{{ asset('image/photo_profil/'~ user.imageProfil) }}" class="position-absolute bg bg-white rounded photo img-responsive" alt="photo de profil" title="photo de profil"  />
+                            {% endif %}
+                            <i class="fa fa-camera-retro rounded" aria-hidden="true" style="align-self:right;"></i>
+                        </div>
+                        <h2 class="mt-2 mb-2">{{ user.lastname }} {{ user.firstname }}</h2>
+                    </div>
+                {# NAV #}
+                    <nav class="col-12">
+                        <ul class="d-flex justify-content-center list-unstyled">
+                            <a href="{{ path('profil') }}" {% if app.request.get('_route') == 'profil' %} class="text-decoration-none text-white text-center active" {% else %} class="text-decoration-none text-white text-center"{% endif %}>
+                                <li><i class="fa fa-user-o" aria-hidden="true"></i></li>
+                            </a>
+                            <a href="{{ path('mesure') }}" {% if app.request.get('_route') == 'mesure' %} class="text-decoration-none text-white text-center active" {% else %} class="text-decoration-none text-white text-center"{% endif %}>
+                                <li><i class="fa fa-pencil-square-o" aria-hidden="true"></i></li>
+                            </a>
+                            <a href="{{ path('profil') }}" {% if app.request.get('_route') == '' %} class="text-decoration-none text-white text-center active" {% else %} class="text-decoration-none text-white text-center"{% endif %}>
+                                <li><i class="fa fa-wrench" aria-hidden="true"></i></li>
+                            </a>
+                            <a href="{{ path('app_logout') }}" {% if app.request.get('_route') == 'app_logout' %} class="text-decoration-none text-white text-center active" {% else %} class="text-decoration-none text-white text-center"{% endif %}>
+                                <li><i class="fa fa-sign-out" aria-hidden="true"></i></li>
+                            </a>
+                        </ul>
+                    </nav>
+            </div>
+
+            <!-- Modal -->
+            <div class="modal fade" id="photo_profil_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Changer photo de profil</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                        <form class="form-group text-center photo_profil" method="post" enctype='multipart/form-data'>  
+                            <div class="modal-body">
+                                <div class="form">
+                                    <label for="photo_profil">Photo de profil</label>
+                                    <input type="file" id="photo_profil" class="form-control" name="photo_profil" />
+                                </div>
+                                <div class="message_form"></div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Retour</button>
+                                <input type="submit" class="btn btn-primary" value="Enregistrer" />
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </header>
         <content class="col-xl-10 col-lg-9 col-md-9 col-sm-12 col-xs-12 container-fluid no-gutters p-0 m-0">
             {% block body %}{% endblock %}
@@ -94,7 +160,48 @@
         <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+        <script>
+            // Gestion animation au survol de la photo de profil
+                $('.bloc-image-profil').hover(function(){
+                    var image = $(this).find('img');
+                    var photo = $(this).find('i');
+                    if(!image.hasClass('shadow')){
+                        image.addClass('shadow');
+                        photo.show();
+                    } else {
+                        image.removeClass('shadow');
+                        photo.hide();
+                    }
+                });
+
+            // Ajax servant l'ajout / changement de la photo de profil
+                $('form.photo_profil').on('submit', function(e){
+                    e.preventDefault();
+                    var fd = new FormData(this);
+                    var files = $('#photo_profil')[0].files[0];
+                    fd.append('file', files);
+                    $.ajax({
+                        url:"{{ path('add_photo_profil') }}",
+                        type:"post",
+                        data: fd,
+                        contentType:false,
+                        processData:false,
+                        success: function(response){
+                            $('.message_form').empty();
+                            if(response.success){
+                                var source = "{{ asset('image/photo_profil/') }}" + response.photo_name;
+                                $('.message_form').append(response.success);
+                                $('.photo').remove();
+                                $('.bloc-image-profil').append('<img src="' + source + '" class="position-absolute bg bg-white rounded img-responsive photo" alt="photo de profil" title="photo de profil" />');
+
+                            } else {
+                                $('.message_form').append(response.Erreur);
+                            }
+                            console.log(response.success);
+                        }
+                    });
+                });
+        </script>
         {% block javascripts %}{% endblock %}
 </body>
 </html>
-{# #}

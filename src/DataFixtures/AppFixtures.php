@@ -73,7 +73,7 @@ class AppFixtures extends Fixture
             $cible9 = new Mesures();
             $cible9->setName('Mollet');
             $cible9->setDescription('Debout, talon au sol et jambe tendue, au plus gros, décontracté');
-            $cible9->setImage('https://lh3.googleusercontent.com/proxy/gXnd36cKZDc7M77yjWVzlkaFUFNB5PczH3zYuyD-sEdKAqMkQJBeB6xqFps-CJYHEIqFzW5oy6c_jFsN7zT2oJpOTg');
+            $cible9->setImage('https://www.calculersonimc.fr/wp-content/uploads/2018/12/maigrir-des-mollets-770x515.jpg');
             $manager->persist($cible9);
             
             $cible10 = new Mesures();
@@ -87,6 +87,19 @@ class AppFixtures extends Fixture
             $cible11->setDescription('Le mettre-ruban passe sur les fesses et sous le ventre');
             $cible11->setImage('https://i.ytimg.com/vi/SKZVcWWlnEY/maxresdefault.jpg');
             $manager->persist($cible11);
+
+            $cible12 = new Mesures();
+            $cible12->setName('Poids');
+            $cible12->setDescription('Pesez-vous');
+            $cible12->setImage('https://walz-images.walz.de/v2/280x280_r1/images/SU/652/9/6529160_01/jpg/medisana-pese-personne-medical-psd-p1657553.jpg');
+            $manager->persist($cible12);
+
+            $cible13 = new Mesures();
+            $cible13->setName('Taille corps');
+            $cible13->setDescription('Mesurez-vous des pieds à la têtes');
+            $cible13->setImage('https://e.educlever.com/img/1/4/6/7/14678.gif');
+            $manager->persist($cible13);
+
             $manager->flush();
 
             $noemie = new User();
@@ -142,7 +155,5 @@ class AppFixtures extends Fixture
                 $manager->persist($inscription_mesure);
             }
             $manager->flush();
-
-
     }
 }

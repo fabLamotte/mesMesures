@@ -3,17 +3,10 @@
 {% block title %}Mesmesures | Mesures{% endblock %}
 
 {% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('owl/dist/assets/owl.carousel.min.css') }}" /> 
+    <link rel="stylesheet" href="{{ asset('owl/dist/assets/owl.theme.default.min.css') }}" /> 
     <style>
-        section { height:100%; overflow:auto; max-height:600px; }
-        .block-image .image-taille { cursor:pointer; transition: opacity 0.2s ease; height: 100px; }
-        .block-image .image-taille:hover { opacity:0.6; }
-        .block-image .check { display:none; bottom: 0; right: 0; }
-        .block-image .check.active { display:block; }
-        .block-image span { display:none; right:0; top:-10px; background: #181C1F; border:2px solid white; color:white; padding:0 5px 0 5px; width:100%; font-family: "gravtrac"; }
-        .block-image span.active { display:block; }
-        .block-image.disabled { opacity:0.4; }
-        .border-orange { border:1px solid #FF7000; transition: border 0.2s ease; }
-        .border-orange:hover { border: 3px solid #FF7000; }
+        section { height:100%; overflow:auto; max-height:800px; }
         #loading-spinner { display: inline; position: relative; z-index: 999999; }
         #loading-spinner .spin-icon { margin: auto; width: 40px; height: 40px; border: solid 3px transparent; border-top-color: #666; border-left-color: #666; border-radius: 80px; -webkit-animation: loading-spinner 500ms linear infinite; -moz-animation:    loading-spinner 500ms linear infinite; -ms-animation:     loading-spinner 500ms linear infinite; -o-animation:      loading-spinner 500ms linear infinite; animation:         loading-spinner 500ms linear infinite; }
         @-webkit-keyframes loading-spinner { 0%   { -webkit-transform: rotate(0deg);   transform: rotate(0deg); } 100% { -webkit-transform: rotate(360deg); transform: rotate(360deg); } }
@@ -21,34 +14,18 @@
         @-o-keyframes loading-spinner { 0%   { -o-transform: rotate(0deg);   transform: rotate(0deg); } 100% { -o-transform: rotate(360deg); transform: rotate(360deg); } }
         @-ms-keyframes loading-spinner { 0%   { -ms-transform: rotate(0deg);   transform: rotate(0deg); } 100% { -ms-transform: rotate(360deg); transform: rotate(360deg); } }
         @keyframes loading-spinner { 0%   { transform: rotate(0deg);   transform: rotate(0deg); } 100% { transform: rotate(360deg); transform: rotate(360deg); } }
+
+        .carte .image img{ height:150px; width:150px; }
+        
     </style>
 {% endblock %}
 {% block body %}
     <section class="m-0 p-0 bloc rounded">
         <div class="row col-12 d-flex justify-content-center mt-3 text-white" style="font-family: 'gravtrac'; font-size:18px;">
-            <p>Il vous reste <span class="nombre-mesures"> {{ mesures|length - nbMesure }} </span>/ {{ mesures|length }} mesures à renseigner</p>
+            <p class="text-center">Il vous reste <span class="nombre-mesures"> {{ mesures|length - nbMesure }} </span> mesures à inscrire</p>
         </div>
-        <div class="row d-flex justify-content-center mt-3 p-3">
-            {% for mesure in mesures %}
-                <div class="col-4 col-xl-1 col-lg-2 col-md-3 col-sm-3">
-                    <div {% if mesure.name in wait %}
-                            class="block-image text-center position-relative disabled" 
-                        {% else %}
-                            class="block-image text-center position-relative" 
-                        {% endif %}
-                        data-type="{{ mesure.name }}">
-                        <img src="{{ mesure.image }}" data-type="{{ mesure.name }}" alt="zone-corps" title="zone-corps p-2" 
-                            {% if mesure.name in wait %}
-                                class="image-taille img-fluid rounded border border-white p-1 img-fluid" 
-                            {% else %}
-                                class="image-taille img-fluid rounded border-orange p-1 img-fluid" 
-                            {% endif %}
-                        width="100" height="100" />
-                        <img src="{{ asset('image/check.png') }}" alt="check" title="check" class="check position-absolute img-fluid" width="20" height="20" />
-                        <span class="position-absolute rounded">{{ mesure.name }}</span>
-                    </div>
-                </div>
-            {% endfor %}
+        <div class="row no-gutters">
+            {% include 'mesure/carousel/carousel.html.twig' %}
         </div>
         <div class="row mt-5">
             <form class="form-group offset-4 col-4 text-center">
@@ -61,117 +38,65 @@
 {% endblock %}
 
 {% block javascripts %}
-    <script src="{{ asset('js/jquery.js') }}" type="text/javascript"></script>
-    <script  type="text/javascript">
-        $(document).ready(function(){
-            blocImages = $('.block-image:not(.disabled)');
-            if(blocImages.length == 0){
-                $('form .message-form').append('<div class="text-success">Vous avez terminé vos mesures pour cette semaine</div>');
-            }
-        });
+    <script type="text/javascript" src="{{ asset('js/jquery.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('owl/dist/owl.carousel.min.js') }}" type="text/javascript"></script>
 
+    {# Gestion du formulaire via le carousel #}
+        <script  type="text/javascript">
+            // Au clic sur un boutton du carousel
+                $(document).ready(function(){
+                    $('.card .btn .add-input').click(function(){
+                        // Animation de carte selectionnée + apparition de l'input associé
+                            var card = $(this).parent().parent().parent();
+                            var check = card.parent().find('img.check');
+                            var type = $(this).attr('data-type');
+                            var inputZone = $('.input-zone');
 
-        // Affichage du texte au survol de l'image
-            $('.block-image').hover(function(){
-                var cible = $(this).find('span');
-                cible.addClass('active');
-            });
-
-        // Arrêt d'affichage du texte au survol de l'image
-            $('.block-image').mouseout(function(){
-                var cible = $(this).find('span');
-                if(cible.hasClass('active')){
-                    cible.removeClass('active');
-                }
-            });
-
-        // Attribution du label au clic de l'image
-            $('.block-image').click(function(){
-                var check = $(this).find('.check');
-                var image = $(this).find('.image-taille');
-                var form = $("form");
-                if(!$(this).hasClass('disabled')){
-                    if(check.hasClass('active')){
-                        image.css({"opacity" : "1"});
-                        check.removeClass('active');
-                        var input = $(document).find('input.' + image.attr('data-type'));
-                        input.remove();
-                    } else if(!check.hasClass('active')){
-                        image.css({"opacity" : "0.3"});
-                        check.addClass('active');
-                        var html = '<input type="text" class="col-12 text-center ' + image.attr('data-type') + ' form-control" placeholder=" ' + image.attr('data-type') + '" />';
-                        form.find('.input-zone').append(html);
-                    }
-                } 
-                
-                showSubmitButton();
-            });
-
-        // Apparition du boutton submit de formulaire
-            function showSubmitButton(){
-                var nbInputs = $(document).find('input').length;
-                var target = $(document).find('form .submit-zone');
-                if(nbInputs > 0){
-                    target.empty();
-                    target.append('<span class="btn btn-success submit-form">Enregistrer la sélection</span>');
-                } else {
-                    target.empty();
-                }
-            }
-
-        // au clic sur la validation du formulaire
-            $(document).on('click', '.submit-form', function(){
-                var Cou = ['Cou', $(document).find('input.Cou').val()];
-                var Epaules = ['Epaules', $(document).find('input.Epaules').val()];
-                var Pectoraux = ['Pectoraux', $(document).find('input.Pectoraux').val()];
-                var Biceps = ['Biceps', $(document).find('input.Biceps').val()];
-                var AvantBras = ['Avant-bras', $(document).find('input.Avant-bras').val()];
-                var Poignet = ['Poignet', $(document).find('input.Poignet').val()];
-                var Taille = ['Taille', $(document).find('input.Taille').val()];
-                var Cuisse = ['Cuisse', $(document).find('input.Cuisse').val()];
-                var Mollet = ['Mollet', $(document).find('input.Mollet').val()];
-                var Cheville = ['Cheville', $(document).find('input.Cheville').val()];
-                var Hanche = ['Hanche', $(document).find('input.Hanche').val()];
-                var array = [Cou, Epaules, Pectoraux, Biceps, AvantBras, Poignet, Taille, Cuisse, Mollet, Cheville, Hanche];
-
-                $.ajax({
-                    type:'post',
-                    url:'nouvelle_mesure',
-                    data: { array:array },
-                    beforeSend: function(){
-                        $(document).find('form .submit-form').hide();
-                        var html = '<div id="loading-spinner"><div class="spin-icon"></div></div>';
-                        $(document).find('.submit-zone').append(html);
-                    },
-                    success: function(response){
-                        $mesures_restantes = $('.nombre-mesures').html();
-                        $nouvelle_mesures_restantes = $mesures_restantes - response[0].length;
-                        $('.nombre-mesures').empty().append($nouvelle_mesures_restantes);
-
-                        // On désactive les images correctement renseignées
-                            $.each(response[0], function(id, value){
-                                $('.block-image[data-type="' + value + '"]').addClass('disabled'); 
-                                $(document).find('form input.' + value).remove();                 
-                            });
-
-                        // Mise en valeur des champs avec erreur + message
-                            if(response[1] > 0){
-                                $(document).find('form input').css({'border':'1px solid red'});
-                                $(document).find('form .message-form').empty().append('Certains champs sont vides ou mal inscrits.').removeClass('text-success').addClass('text-danger');
+                            if(!card.hasClass('selected')){
+                                card.addClass('selected');
+                                check.removeClass('d-none');
+                                // Affichage des inputs
+                                    inputZone.append('<input type="text" dataType="' + type + '" class="' + type + ' col-12 form-control" placeholder="' + type +  '" /> ');
                             } else {
-                                $(document).find('form .message-form').empty().append('Champs enregistrés avec succès').removeClass('text-danger').addClass('text-success');
+                                card.removeClass('selected');
+                                check.addClass('d-none');
+                                inputZone.find('input[dataType="' + type + '"]').remove();
                             }
-                            
-                        // Suppression du spin load / Réapparition du boutton de validation
-                            $(document).find('form .submit-zone').empty().append('<span class="btn btn-success submit-form">Enregistrer la sélection</span>');
 
-                        // Si toutes les inscriptions sont terminées on affiche un message
-                            if($('.block-image:not(.disabled)').length == 0){
-                                $('form .message-form').append('<div class="text-success">Vous avez terminé vos mesures pour cette semaine</div>');
-                            }
+                            // Affichage du boutton submit
+                                showButtonSubmit();
+                    });
+                });
+
+                function showButtonSubmit(){
+                    nbInputs = $('.inputZone input').length();
+                    console.log(nbInputs);
+                }
+
+            
+        </script>
+
+    {# Carousel #}
+        <script  type="text/javascript">
+            $('.slider').owlCarousel({
+                responsive: {
+                    0: {
+                        items: 2,
+                        nav: true
+                    },
+                    600: {
+                        items: 3,
+                        nav: true
+                    },
+                    1000: {
+                        items: 4,
+                        nav: true,
+                    },
+                    1500: {
+                        items: 5,
+                        nav: true
                     }
-                })
+                }
             });
-
-    </script>
+        </script>
 {% endblock %}
