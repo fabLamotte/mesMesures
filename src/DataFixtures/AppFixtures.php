@@ -7,6 +7,7 @@ use Doctrine\Persistence\ObjectManager;
 use App\Entity\Mesures;
 use App\Entity\InscriptionMesure;
 use App\Entity\User;
+use App\Entity\Sexe;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use DateTime;
 
@@ -100,7 +101,17 @@ class AppFixtures extends Fixture
             $cible13->setImage('https://e.educlever.com/img/1/4/6/7/14678.gif');
             $manager->persist($cible13);
 
-            $manager->flush();
+                $manager->flush();
+            
+            $sexe1 = new Sexe();
+            $sexe1->setLibelle('Homme');
+            $manager->persist($sexe1);
+
+            $sexe2 = new Sexe();
+            $sexe2->setLibelle('Femme');
+            $manager->persist($sexe2);
+            
+                $manager->flush();
 
             $noemie = new User();
             $noemie->setFirstname('Noemie');
@@ -111,7 +122,8 @@ class AppFixtures extends Fixture
             $noemie->setDateNaissance(new \DateTime('1999-01-29 00:00:00'));
             $noemie->setLastname('Melchilsen');
             $manager->persist($noemie);
-            $manager->flush();
+                $manager->flush();
+
 
             $tab = [
                 [$cible7, $noemie, '2021-01-22 00:00:00', 96],

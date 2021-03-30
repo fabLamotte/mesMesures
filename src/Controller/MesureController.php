@@ -29,27 +29,33 @@ class MesureController extends AbstractController
         $user = $this->getUser();
         $mesures = $em->getRepository(Mesures::class)->findAll(); // Recherche de toutes les zones cibles
 
-        $data = $em->getRepository(InscriptionMesure::class)->findLastDataByUser($this->getUser());
-        $lastTime = 0;
-        $wait = [];
+        $mesures_a_inscrire = [];
 
-        foreach($data as $last){
-            $timestamp = strtotime($last->getDate()->format('Y-m-d'));
-            if($timestamp >= $lastTime){
-                $lastTime = $timestamp;                     //  Timestamp de la derniere inscription
-                $une_semaine = 60*60*24*7;                  //  Nombre de secondes que fait une semaine
-                $timestamp_du_jour = strtotime('now');      //  Timestamp aujourd'hui
-                if(($timestamp + $une_semaine) > $timestamp_du_jour){   // S'il ne s'est pas écoulé plus d'une semaine depuis la dernière inscription
-                    $wait[] = $last->getMesures()->getName();           // On ajoute la zone du corps au tableau des zone indisponible
-                }
+        // On boucle sur tous les types de mesures
+            foreach($mesures as $mesure){
+                // Pour chaque mesure, on voit si une donnée plus recente existe
+                    $inscription = $em->getRepository(InscriptionMesure::class)->findLastDataByUserAndMesure($this->getUser(), $mesure);
+
+                    // Si une donnée récente existe...
+                    if($inscription){
+                        // On vérifie qu'elle date d'il y a plus d'une semaine
+                        $timestamp = strtotime($inscription->getDate()->format('Y-m-d'));       // Nombre de seconde écoulée jusqu'à la prise de la mesure
+                        $semaine = 60*60*24*7;                                                  // Nombre de seconde que contient une semaine complète
+                        $date_du_jour = new \DateTime();                                        // Date d'aujourd'hui
+                        $timestamp_du_jour = strtotime($date_du_jour->format('Y-m-d'));         // Nombre de seconde écoulée jusqu'à aujourd'hui
+
+                        // On garde la mesure à inscrire si la derniere prise remonte à il y a une semaine
+                        if(($timestamp_du_jour - $semaine) > $timestamp){
+                            $mesures_a_inscrire[] = $mesure;
+                        }
+                    } else {
+                        $mesures_a_inscrire[] = $mesure;
+                    }
             }
-        }
 
         return $this->render('mesure/mesure.html.twig', [
-            'mesures'   => $mesures,
+            'mesures'   => $mesures_a_inscrire,
             'user'      => $user,
-            'wait'      => $wait,
-            'nbMesure'  => count($wait),
         ]);
     }
 
@@ -57,30 +63,35 @@ class MesureController extends AbstractController
      * @Route("/nouvelle_mesure", name="nouvelle_mesure", options={"expose"=true})
      */
     public function nouvelle_mesure(Request $request){
-        $mesures = $request->request->get('array');
-        $em = $this->getDoctrine()->getManager();
-        $date = new \DateTime();
-        $confirmed = [];
-        $errors = 0;
-        
-        foreach($mesures as $mesure => $data){
-            if(isset($data[1])){
-                if($data[1] != ""){
-                    $new_donnees = new InscriptionMesure();
-                    $mesur = $em->getRepository(Mesures::class)->findOneBy(['name' => $data[0]]);
-                    $new_donnees->setMesures($mesur);
-                    $new_donnees->setCm(intval($data[1]));
-                    $new_donnees->setUser($this->getUser());
-                    $new_donnees->setDate($date);
-                    $em->persist($new_donnees);
-                    $confirmed[] = $data[0];
-                } else {
-                    $errors++;
-                }
-            } 
-        }
-        $em->flush();
+        // Récupération des variables
+            $user = $this->getUser();
+            $em = $this->getDoctrine()->getManager();
+            $value = $request->request->get('value');
+            $id = $request->request->get('id');
+            $date = new \DateTime();
 
-        return $this->json([$confirmed, $errors]);
+        // Vérification qu'il s'agisse bien d'un integer / float
+            $regex = '/^[\d]+[\.|\,]{0,1}[\d]{0,2}$/';
+            if(preg_match($regex, $value)){
+                // Remplacement s'il y a une virgule
+                    $eclatement = explode(',', $value);
+                    (isset($eclatement[1]))? $value = $eclatement[0].'.'.$eclatement[1] : $value = $eclatement[0];
+
+                // Rentrée des données
+                    $inscriptionMesure = new InscriptionMesure();
+                    $inscriptionMesure->setDate($date);
+                    $inscriptionMesure->setCm($value);
+                    $mesure = $em->getRepository(Mesures::class)->findOneBy(['id' => $id]);
+                    $inscriptionMesure->setMesures($mesure);
+                    $inscriptionMesure->setUser($user);
+                    $em->persist($inscriptionMesure);
+                    $em->flush();
+
+                // Retour
+                    return $this->json(['success', 'Inscription réalisée avec succès']);
+            } else {
+                $message = 'La valeur de votre taille est incorrecte.';
+                return $this->json(['error', $message]);
+            }
     }
 }

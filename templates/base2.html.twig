@@ -22,22 +22,26 @@
             .small-menu nav a:hover { border-top:1px solid #181C1F;  }
             .custom-color { color: #ff5722 !important; font-family:'gravtrac'; }
             .bloc-image-profil { height:250px; margin:0; padding:0; cursor:pointer; }
-            .bloc-image-profil img{ z-index:1; transition:opacity 0.1s ease; height:auto; max-height:100%; }
+            .bloc-image-profil img{ z-index:1; transition:opacity 0.1s ease; height:auto; max-height:100%; min-height:200px; }
             .bloc-image-profil img.shadow{ opacity:0.4; }
             .bloc-image-profil i{ z-index:2; display:none; font-size:60px; color: #ff5722; }
+
+            @media screen and (max-width: 768px){
+                header { height:400px; }
+            }
         </style>
         {% block stylesheets %}{% endblock %}
     </head>
     <body class="p-2 m-0 container-fluid row rounded">
-        <header class="col-xl-2 col-lg-3 col-md-3 col-sm-12 d-none rounded container-fluid row d-flex flex-column justify-content-between no-gutters p-3">
+        <header class="col-xl-2 col-lg-3 col-md-4 col-sm-12 d-none rounded container-fluid row d-flex flex-column justify-content-between no-gutters p-3">
             <div class="d-none d-md-block large-menu">
                 {# PHOTO PROFIL USER #}
                     <div class="col-12 text-center custom-color">
                         <div class="position-relative bloc-image-profil d-flex justify-content-center no-gutters align-items-center" data-toggle="modal" data-target="#photo_profil_modal">
                             {% if user.imageProfil == '' or user.imageProfil is null %}
-                                <img src="{{ asset('image/inconnu.png') }}" class="position-absolute bg bg-white rounded photo img-responsive" alt="photo de profil" title="photo de profil"  />
+                                <img src="{{ asset('image/inconnu.png') }}" class="position-absolute bg bg-white rounded photo img-fluid" alt="photo de profil" title="photo de profil"  />
                             {% else %}
-                                <img src="{{ asset('image/photo_profil/'~ user.imageProfil) }}" class="position-absolute bg bg-white rounded photo img-responsive" alt="photo de profil" title="photo de profil"  />
+                                <img src="{{ asset('image/photo_profil/'~ user.imageProfil) }}" class="position-absolute bg bg-white rounded photo img-fluid" alt="photo de profil" title="photo de profil"  />
                             {% endif %}
                             <i class="fa fa-camera-retro rounded" aria-hidden="true"></i>
                         </div>
@@ -135,7 +139,7 @@
                 </div>
             </div>
         </header>
-        <content class="col-xl-10 col-lg-9 col-md-9 col-sm-12 col-xs-12 container-fluid no-gutters p-0 m-0">
+        <content class="col-xl-10 col-lg-9 col-md-8 col-sm-12 col-xs-12 container-fluid no-gutters p-0 m-0">
             {% block body %}{% endblock %}
         </content>
         <footer class="col-12 bloc container-fluid">

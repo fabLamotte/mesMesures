@@ -19,13 +19,16 @@ class InscriptionMesureRepository extends ServiceEntityRepository
         parent::__construct($registry, InscriptionMesure::class);
     }
 
-    public function findLastDataByUser($user){
+    public function findLastDataByUserAndMesure($user, $mesure){
         return $this->createQueryBuilder('m')
             ->where('m.user = :user')
+            ->andWhere('m.mesures = :mesure')
             ->orderBy('m.date', 'DESC')
             ->setParameter('user', $user)
+            ->setParameter('mesure', $mesure)
+            ->setMaxResults(1)
             ->getQuery()
-            ->getResult()
+            ->getOneOrNullResult()
         ;
     }
 }

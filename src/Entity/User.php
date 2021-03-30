@@ -70,6 +70,21 @@ class User implements UserInterface
      */
     private $weightGoal;
 
+    /**
+     * @ORM\ManyToOne(targetEntity=Sexe::class, inversedBy="users")
+     */
+    private $sexe;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $age;
+
+    /**
+     * @ORM\ManyToOne(targetEntity=ProfilSportif::class, inversedBy="users")
+     */
+    private $profilSportif;
+
     public function __construct(){
         $this->password_change_asked = false;
     }
@@ -231,6 +246,42 @@ class User implements UserInterface
     public function setWeightGoal(?string $weightGoal): self
     {
         $this->weightGoal = $weightGoal;
+
+        return $this;
+    }
+
+    public function getSexe(): ?Sexe
+    {
+        return $this->sexe;
+    }
+
+    public function setSexe(?Sexe $sexe): self
+    {
+        $this->sexe = $sexe;
+
+        return $this;
+    }
+
+    public function getAge(): ?string
+    {
+        return $this->age;
+    }
+
+    public function setAge(string $age): self
+    {
+        $this->age = $age;
+
+        return $this;
+    }
+
+    public function getProfilSportif(): ?ProfilSportif
+    {
+        return $this->profilSportif;
+    }
+
+    public function setProfilSportif(?ProfilSportif $profilSportif): self
+    {
+        $this->profilSportif = $profilSportif;
 
         return $this;
     }
