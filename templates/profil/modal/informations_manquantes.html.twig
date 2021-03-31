@@ -2,50 +2,52 @@
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title text-center" id="exampleModalLabel">Certaines informations sont nécessaires pour calculer vos besoins calorique de base</h5>
+        <h5 class="modal-title text-center" id="exampleModalLabel">Dites-nous en plus sur vous</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <form>
         <div class="modal-body">
-            {# Enregistrement de l'age #}
-              {% if data[3] is null or data[3] == "" %}
+              {% if 'Age' in dataForgot %}
                 <div class="form-group position-relative">
                   <input type="text" class="ageInput form-control" placeholder="Age" />
                 </div>
               {% endif %}
 
-            {# Enregistrement du poids #}
-              {% if data[0] is null or data[0] == '' %}
+              {% if 'Poids' in dataForgot %}
                 <div class="form-group position-relative">
                   <input type="text" class="poidsInput form-control" placeholder="Poids du corps" />
                 </div>
               {% endif %}
 
-            {# Enregistrement de la taille #}
-              {% if data[1] is null or data[1] == '' %}
+              {% if 'ObjectifPoids' in dataForgot %}
+                <div class="form-group position-relative">
+                  <input type="text" class="objectifPoidsInput form-control" placeholder="Objectif poids" />
+                </div>
+              {% endif %}
+
+              {% if 'Taille' in dataForgot %}
                 <div class="form-group position-relative">
                   <input type="text" class="tailleInput form-control" placeholder="Taille du corps" />
                 </div>
               {% endif %}
 
-            {# Enregistrement du sexe #}
-              {% if data[2] is null or  data[2] == '' %}
+              {% if 'Sexe' in dataForgot %}
                 <div class="d-flex justify-content-center">
                   <div class="homme fake-input active" data-attribute="Homme">Homme</div>
                   <div class="femme fake-input" data-attribute="Femme">Femme</div>
                 </div>
               {% endif %}
 
-            {# Enregistrement du profil sportif de l'utilisateur #}
-              {% if data[5] is null or data[5] == '' %}
-                <h2 class="mt-3">Votre profil sportif</h2>
-                <div class="row no-gutters mt-3">
+              {% if 'ProfilSportif' in dataForgot %}
+                <h2 class="mt-3 text-center">Votre profil sportif</h2>
+                <div class="row no-gutters mt-3 position-relative">
+                  <div class="target-error-message"></div>
                   {% for ps in profilsSportif %}  
-                    <div class="col bloc-profil-sportif position-relative align-items-center">
+                    <div class="col bloc-profil-sportif position-relative align-items-center text-center">
                       <div class="d-flex justify-content-center flex-column bloc">
-                        <label>{{ ps.libelle }}</label>  
+                        <label class="">{{ ps.libelle }}</label>  
                         <input type="radio" name="profilSportif" value="{{ ps.libelle }}" /> <br />
                       </div>
                       <div class="position-absolute description d-none infobulle align-items-center justify-content-center">
@@ -55,7 +57,6 @@
                   {% endfor %}
                 </div>
               {% endif %}
-              <div class="target_error_message"></div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" id="closeModal" data-dismiss="modal">Fermer</button>

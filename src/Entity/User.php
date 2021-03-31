@@ -56,7 +56,7 @@ class User implements UserInterface
     private $date_naissance;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=255, nullable=true)
      */
     private $image_profil;
 
@@ -76,7 +76,7 @@ class User implements UserInterface
     private $sexe;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=255, nullable=true)
      */
     private $age;
 
@@ -87,6 +87,12 @@ class User implements UserInterface
 
     public function __construct(){
         $this->password_change_asked = false;
+        $this->image_profil = null;
+        $this->tokenRecover = "";
+        $this->weightGoal = null;
+        $this->sexe = null;
+        $this->age = null;
+        $this->profilSportif = null;
     }
 
     public function getId(): ?int

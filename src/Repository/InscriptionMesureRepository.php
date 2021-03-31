@@ -19,6 +19,9 @@ class InscriptionMesureRepository extends ServiceEntityRepository
         parent::__construct($registry, InscriptionMesure::class);
     }
 
+    /**
+     * Fonction retournant la derniere mesure de l'utilisateur dans la mesure concernée
+     */
     public function findLastDataByUserAndMesure($user, $mesure){
         return $this->createQueryBuilder('m')
             ->where('m.user = :user')
@@ -26,6 +29,24 @@ class InscriptionMesureRepository extends ServiceEntityRepository
             ->orderBy('m.date', 'DESC')
             ->setParameter('user', $user)
             ->setParameter('mesure', $mesure)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult()
+        ;
+    }
+    
+    /**
+     * Fonction retournant la mesure concernée si elle rentre dans la portion de date concernée
+     */
+    public function findDataOneWeek($user, $mesure, $debut, $max){
+        return $this->createQueryBuilder('m')
+            ->where('m.user = :user')
+            ->andWhere('m.mesures = :mesure')
+            ->andWhere('m.date BETWEEN :debut and :max')
+            ->setParameter('user', $user)
+            ->setParameter('mesure', $mesure)
+            ->setParameter('debut', $debut)
+            ->setParameter('max', $max)
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult()

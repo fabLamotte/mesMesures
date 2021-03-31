@@ -6,20 +6,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css?family=Poppins:400,500,600,700&display=swap');
         .goal { font-size: 32px ; }
-          .circular{ height: 100px; width: 100px; position: relative; }
-          .circular .inner, .circular .outer, .circular .circle{ position: absolute; z-index: 6; height: 100%; width: 100%; border-radius: 100%; }
-          .circular .inner{ top: 50%; left: 50%; height: 80px; width: 80px; margin: -40px 0 0 -40px; background-color: #2F3642; border-radius: 100%; }
-          .circular .circle{ z-index: 1; }
-          .circular .numb{ position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; font-size: 32px; font-weight: 500; color: white; }
-          .circular .bar{ position: absolute; height: 100%; width: 100%; background: #22252C; -webkit-border-radius: 100%; clip: rect(0px, 100px, 100px, 50px); }
-          .circle .bar .progress{ position: absolute; height: 100%; width: 100%; -webkit-border-radius: 100%; clip: rect(0px, 50px, 100px, 0px); }
-          .circle .bar .progress, .dot span{ background: #FF7000; }
-          .circle .left .progress{ z-index: 1; animation: left 0.2s linear both; }
-          @keyframes left { 100%{ transform: rotate(180deg); } }
-          .circle .right{ z-index: 3; transform: rotate(180deg); }
-          .circle .right .progress{ animation: right 0.2s linear both; animation-delay: 0.2s; }
-          @keyframes right { 100%{ transform: rotate(180deg); } }
-          .graph { overflow:auto;  }
+        .graph { overflow:auto;  }
 
         form .fake-input.active { background:green !important; transition:background 0.3s ease; }
         form .fake-input { padding: 10px 15px; font-size:15px; color:white; cursor:pointer; background: grey; border:1px solid white; }
@@ -33,54 +20,26 @@
         .loading-bar:nth-child(3) {background-color: #a73e1c; animation-delay: .18s; }
         .loading-bar:nth-child(4) { background-color: #a73e1c; animation-delay: .27s; }
         @keyframes loading { 0% { transform: scale(1); } 20% { transform: scale(1, 2.2); } 40% { transform: scale(1); } }
-
-        @media screen and (max-width: 575px){
-            .carte .image { text-align:center; }
-        }
+        @media screen and (max-width: 575px){.carte .image { text-align:center; } }
     </style>
 {% endblock %}
 
 {% block body %}
     <section class="m-0 p-0 bloc goal rounded col-12 custom-color">
       <div class="row">
+        <button class="d-none" id="forgotModal" data-toggle="modal" data-target="#infosManquantes"></button>
+        {% include 'profil/modal/informations_manquantes.html.twig' %}
         {# POIDS #}
           <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6 col-xs-12 p-2">
             <div class="d-flex flex-column align-items-center">
               <div class="text-white" >Objectif poids</div>
-              {% if user.weightGoal is null %}
-                  <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#exampleModal">
-                    Fixer un objectif de poids
-                  </button>
-                  <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                      <div class="modal-content">
-                        <div class="modal-header">
-                          <h5 class="modal-title" id="exampleModalLabel">Fixez-vous un nouvel objectif de poids</h5>
-                          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                          </button>
-                        </div>
-                        <div class="modal-body">
-                          ...
-                        </div>
-                        <div class="modal-footer">
-                          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                          <button type="button" class="btn btn-primary">Save changes</button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-              {% else %}
-                <div class="circular">
-                  <div class="inner"></div>
-                  <div class="outer"></div>
-                  <div class="numb">0%</div>
-                  <div class="circle">
-                    <div class="bar left"><div class="progress"></div></div>
-                    <div class="bar right"><div class="progress"></div></div>
-                  </div>
-                </div>
-              {% endif %}
+              <div class="WeightGoalSelector" data-value="{{ datas.weight_goal }}">
+                {% if datas.weight_goal is null %}
+                  0 kg
+                {% else %}
+                  {{ datas.weight_goal }} kg
+                {% endif %}
+              </div>
             </div>
           </div>
 
@@ -88,7 +47,13 @@
           <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6 col-xs-12 p-2">
             <div class="d-flex flex-column align-items-center text-center">
               <div class="text-white">Mesures restantes</div>
-              <div>8/10</div>
+              <div class="mesuresRestantesSelector" data-value="{{ datas.nombre_mesures_restantes }}">
+                {% if datas.nombre_mesures_restantes is null %}
+                  0 restantes
+                {% else %}
+                  {{ datas.nombre_mesures_restantes }} restantes
+                {% endif %}
+              </div>
             </div>
           </div>
 
@@ -96,18 +61,13 @@
           <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6 col-xs-12 p-2">
             <div class="d-flex flex-column align-items-center text-center">
               <div class="text-white">Besoin calorique de base</div>
-              {% if data[0] is null or data[0] == '' 
-                or data[1] is null or data[1] == ''
-                or data[2] is null or data[2] == ''
-                or data[3] is null or data[3] == ''
-                or data[5] is null or data[5] == '' %}
-                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#infosManquantes">
-                  Informations manquantes
-                </button>
-                {% include 'profil/modal/informations_manquantes.html.twig' %}
-              {% else %}
-                <div class="targetCalorie">{{ besoinCalorique }} kCal</div>
-              {% endif %}
+              <div class="calorieSelector" data-value="{{ datas['besoin_calorique_de_base'] }}">
+                {% if datas.besoin_calorique_de_base is null %}
+                  0 kCal
+                {% else %}
+                  {{ datas.besoin_calorique_de_base }} kCal
+                {% endif %}
+              </div>
             </div>
           </div>
 
@@ -115,7 +75,7 @@
           <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6 col-xs-12 p-2">
             <div class="d-flex flex-column align-items-center">
               <div class="text-white">IMC</div>
-              <div>Surpoids</div>
+              <div class="imcSelector" data-value="{{ datas['imc'] }}">En cours</div>
             </div>
           </div>
       </div>
@@ -127,20 +87,56 @@
 {% block javascripts %}
     <script src="{{ asset('js/jquery.js') }}" type="text/javascript"></script>
     <script>
-      // Lancement de l'animation jauge objectif
-      function launch_weight_goal(){
-        const numb = document.querySelector(".numb");
-        let counter = 0;
-        let max = 100;
-        setInterval(()=>{
-          if(counter == max){
-            clearInterval();
-          }else{
-            counter+=1;
-            numb.textContent = counter + "%";
+      $(document).ready(function(){
+        // Récupération de variable à traiter
+          var weightGoalSelector = $('.WeightGoalSelector').attr('data-value');
+          var mesureRestantes = $('.mesuresRestantesSelector').attr('data-value');
+          var calorie = $('.calorieSelector').attr('data-value');
+          var imc = $('.imcSelector').attr('data-value');
+          if(weightGoalSelector == '' || mesureRestantes == '' || calorie == '' || imc == ''){
+            $('#forgotModal').trigger('click');
           }
-        }, 10);
-      }
+      });
+
+      // Validation du formulaire "informations manquantes"
+        $('#submitMissInfosForm').click(function(e){
+          e.preventDefault();
+          var age = $('.ageInput').val();
+          var poids = $('.poidsInput').val();
+          var objectif_poids = $('.objectifPoidsInput').val();
+          var taille = $('.tailleInput').val();
+          var sexe = $('.fake-input.active').attr('data-attribute');
+          var profil_sportif = $('.bloc-profil-sportif input.checked').val();
+          var load = '<div class="loading"> <div class="loading-bar"></div> <div class="loading-bar"></div> <div class="loading-bar"></div> <div class="loading-bar"></div> </div>';
+
+          $.ajax({
+            url:"{{ path('add_missed_info') }}",
+            type:"post",
+            data: { age:age, poids:poids, objectif_poids:objectif_poids, taille:taille, sexe:sexe, profil_sportif:profil_sportif },
+            beforeSend: function(){
+              // Affichage animation chargement
+                $('.modal-footer button').hide();
+                $('.modal-footer').append(load);
+            }, 
+            success:function(response){
+              if(response['state'] === 'success'){
+                $('.modal-footer').find('.loading').remove();
+                var selector = $('.modal-footer');
+                var message = '<div class="text-success">' + response['message'] + '</div>';
+                selector.append(message);
+                setTimeout(function () { jQuery('#closeModal').trigger('click'); }, 1000);
+                reloadInfo();
+              } else {
+                $('.modal-footer button').show();
+                $('.modal-footer').find('.loading').remove();
+                var selector = $(response['input']);
+                var message = '<div class="error-message position-absolute" style="top:-35px; background:#464646; color:white; font-size:13px; padding:5px; border:1px solid red;">' + response['message'] + '.</div>';
+                selector.parent().append(message).find('.error-message').delay(1500).fadeOut(400);
+              }
+            }
+          });
+        });
+
 
       // Gestion du switch entre homme et femme dans le formulaire
         $('.fake-input').click(function(){
@@ -151,46 +147,6 @@
             thisSelector.addClass('active');
           }
         });
-
-      // Ajout des éléments à la validation du formulaire
-      $('#submitMissInfosForm').click(function(e){
-        e.preventDefault();
-        // Récupération des variables
-          var poids = $('form .poidsInput').val();
-          var taille = $('form .tailleInput').val();
-          var age = $('form .ageInput').val();
-          var sexe = $('.fake-input.active').attr('data-attribute');
-          var profilSportif = $('input[name=profilSportif].checked').val();
-          var load = '<div class="loading"> <div class="loading-bar"></div> <div class="loading-bar"></div> <div class="loading-bar"></div> <div class="loading-bar"></div> </div>';
-
-        // Lancement de la requête
-        $.ajax({
-          url: '{{ path("add_missed_info") }}',
-          type: 'post',
-          data: {poids:poids, taille:taille, age:age, sexe:sexe, profilSportif:profilSportif},
-          beforeSend: function(){
-            $('.modal-footer button').hide();
-            $('.modal-footer').append(load);
-          },
-          success: function(response){
-            $('.modal-footer .loading-bar').remove();
-            $('.modal-footer button').show();
-            if(response['state'] === 'success'){
-              $('.targetCalorie').empty().append(response['besoinCalorique']);
-              $('.modal-footer button').hide();
-              $('.modal-footer').addClass('text-success').append(response['message']);
-              setTimeout(function(){jQuery('#closeModal').trigger('click');},1000);
-            } else {
-              $('.errorMessage').remove();
-              var selector = $(response['input']);
-              var subject = response['message'];
-              var message = '<div class="errorMessage position-absolute"style="top:-35px; background:#464646; color:white; font-size:13px; padding:5px; border:1px solid red;">' + subject + '</div>';
-              selector.css({'border':'1px solid red;'});
-              selector.parent().append(message);
-            }
-          }
-        });
-      });
       
       // Affichage des infobulles au survol
         $('.bloc-profil-sportif').mouseover(function(){
@@ -207,10 +163,53 @@
             infobulle.addClass('d-none');
           }
         });
+        $('input[name=profilSportif]').click(function(){
+          $('input[name=profilSportif]').removeClass('checked');
+          $(this).addClass('checked');
+        });
 
-      $('input[name=profilSportif]').click(function(){
-        $('input[name=profilSportif]').removeClass('checked');
-        $(this).addClass('checked');
-      });
+      // Fonction de rechargement des informations
+        function reloadInfo(){
+          $.ajax({
+            url:"{{ path('reload_info') }}",
+            type:"post",
+            success: function(response){
+              // Affichage du besoin calorique journalier
+                if(response['besoinCal'] !== null){
+                  $('.calorieSelector').empty().append(response['besoinCal'] + ' kCal');
+                }
+
+              // Affichage de l'imc
+                if(response['imc'] !== null){
+                  $('.imcSelector').empty().append(response['imc']);
+                }
+
+              // Affichage du nombre de mesure restantes
+                if(response['mesuresRestante'] !== null){
+                  $('.targetMesuresRestantes').empty().append(response['mesuresRestante']);
+                }
+
+              // Affichage de l'objectif poids
+                if(response['objPoids'] !== null){
+                  $('.WeightGoalSelector').empty().append(response['objPoids']);
+                }
+            }
+          });
+        }
+
+      // Lancement de l'animation jauge objectif
+        function launch_weight_goal(){
+          const numb = document.querySelector(".numb");
+          let counter = 0;
+          let max = 100;
+          setInterval(()=>{
+            if(counter == max){
+              clearInterval();
+            }else{
+              counter+=1;
+              numb.textContent = counter + "%";
+            }
+          }, 10);
+        }
     </script>
 {% endblock %}

@@ -32,36 +32,59 @@ class ProfilController extends AbstractController
                 return $this->redirectToRoute("");
             } 
 
+        // Connexion bdd
         $em = $this->getDoctrine()->getManager();
         $user = $this->getUser();
+        $toutes_les_mesures = $em->getRepository(Mesures::class)->findAll();
+        $mesurePoids = $em->getRepository(Mesures::class)->findOneBy(['name'=>'Poids']);
+        $mesureTaille = $em->getRepository(Mesures::class)->findOneBy(['name'=>'Taille corps']);
+        $derniere_mesure_poids = $em->getRepository(InscriptionMesure::class)->findLastDataByUserAndMesure($user, $mesurePoids);
+        $derniere_mesure_taille = $em->getRepository(InscriptionMesure::class)->findLastDataByUserAndMesure($user, $mesureTaille);
+        $profilsportif = $em->getRepository(ProfilSportif::class)->findAll();
+        $datas = [];
+        $dataForgots = [];
 
-        // Recherche d'informations manquantes
-            $mesurePoids = $em->getRepository(Mesures::class)->findOneBy(['name' => 'Poids']);
-            $mesureTaille = $em->getRepository(Mesures::class)->findOneBy(['name' => 'Taille corps']);
-            $poids = $em->getRepository(InscriptionMesure::class)->findLastDataByUserAndMesure($user, $mesurePoids);
-            $taille = $em->getRepository(InscriptionMesure::class)->findLastDataByUserAndMesure($user, $mesureTaille);
-            $sexe = $user->getSexe();
-            $age = $user->getAge();
-            $weightGoal = $user->getWeightGoal();
-            $profilSportif = $user->getProfilSportif();
-            $profilSportifName = $em->getRepository(ProfilSportif::class)->findAll();
-            if($age === null || $age === ''
-                || $sexe === null || $sexe === ''
-                || $profilSportif === null || $profilSportif === ''
-                || $poids === null || $poids->getCm() === ''  
-                || $taille === null || $taille->getCm() == ''){
-                $besoinCalorique = null;
+        // Stockage des données manquantes à remplir
+            ($user->getWeightGoal() === null || $user->getWeightGoal() === '')? $dataForgots[] = 'ObjectifPoids' : '';      // Objectif Poids
+            ($derniere_mesure_poids === null || $derniere_mesure_poids === '')? $dataForgots[] = 'Poids' : '';              // Poids
+            ($derniere_mesure_taille === null || $derniere_mesure_taille === '')? $dataForgots[] = 'Taille' : '';           // Objectif taille
+            ($user->getAge() === null || $user->getAge() === '')? $dataForgots[] = 'Age' : '';                              // Age
+            ($user->getSexe() === null || $user->getSexe() === '')? $dataForgots[] = 'Sexe' : '';                           // Sexe
+            ($user->getProfilSportif() === null || $user->getProfilSportif() === '')? $dataForgots[] = 'ProfilSportif' : '';// profilSportif
+
+        // Recherche objectif poids      
+            $datas['weight_goal'] = $user->getWeightGoal();
+            
+        // Recherche nombre de mesures restantes
+            $nb_mesures_restantes = 0;
+            $nb_max_mesures = count($toutes_les_mesures);
+            foreach($toutes_les_mesures as $mesure){
+                $m = $em->getRepository(InscriptionMesure::class)->findLastDataByUserAndMesure($user, $mesure);
+                if(!$m){
+                    $nb_mesures_restantes++;
+                }
+            }
+            $datas['nombre_mesures_restantes'] = $nb_mesures_restantes++;
+
+        // Recherche besoins caloriques de base
+            if($user->getAge() === null || $user->getAge() === '' || $user->getSexe() === null || $user->getSexe() === '' || $user->getProfilSportif() === null || $user->getProfilSportif() === '' || $derniere_mesure_poids === null || $derniere_mesure_poids === "" || $derniere_mesure_taille === null || $derniere_mesure_taille === ""){
+                $datas['besoin_calorique_de_base'] = null;
             } else {
-                $besoinCalorique = round($this->calculBesoinCaloriqueBase($age, $sexe,$profilSportif, $poids->getCm(), $taille->getCm()),2);
+                $datas['besoin_calorique_de_base'] = $this->calculBesoinCaloriqueBase($user->getAge(), $user->getSexe(), $user->getProfilSportif(), $derniere_mesure_taille->getCm(), $derniere_mesure_poids->getCm());
             }
 
-            $data = [$poids, $taille, $sexe, $age, $weightGoal, $profilSportif];
+        // Recherche IMC
+            if($derniere_mesure_poids !== null && $derniere_mesure_taille !== null){
+                $datas['imc'] = $this->imc($derniere_mesure_taille->getCm(), $derniere_mesure_poids->getCm());
+            } else {
+                $datas['imc'] = null;
+            }
         
         return $this->render('profil/index.html.twig', [
             'user'              => $user,
-            'data'              => $data,
-            'profilsSportif'    => $profilSportifName,
-            'besoinCalorique'   => $besoinCalorique
+            'datas'             => $datas,
+            'dataForgot'        => $dataForgots,
+            'profilsSportif'    => $profilsportif
         ]);
     }
 
@@ -104,111 +127,204 @@ class ProfilController extends AbstractController
      * @Route("add_missed_info",name="add_missed_info",options={"expose"=true})
      */
     public function addMissedInfo(Request $request){
-        // Connexion BDD
-            $em = $this->getDoctrine()->getManager();
-        // Récupération variable
-            $poids = $request->request->get('poids');
-            $taille = $request->request->get('taille');
-            $age = $request->request->get('age');
-            $sexe = $request->request->get('sexe');
-            $profilSportif = $request->request->get('profilSportif');
-
-        // Autres données
+        // Connexion bdd et recup user
+            $manager = $this->getDoctrine()->getManager();
             $user = $this->getUser();
             $date = new \DateTime();
 
-        // Recherche en BDD
-            $poidsMesure = $em->getRepository(Mesures::class)->findOneBy(['name'=>'Poids']);
-            $tailleMesure = $em->getRepository(Mesures::class)->findOneBy(['name'=>'Taille corps']);
-            $recherche_inscription_poids = $em->getRepository(InscriptionMesure::class)->findOneBy(['user'=>$user, 'mesures'=>$poidsMesure]);
-            $recherche_inscription_taille = $em->getRepository(InscriptionMesure::class)->findOneBy(['user'=>$user, 'mesures'=>$tailleMesure]);
-            $genreSexe = $em->getRepository(Sexe::class)->findOneBy(['libelle'=>$sexe]);
-            $profil_sportif = $em->getRepository(ProfilSportif::class)->findOneBy(['libelle'=>$profilSportif]);
+        // Récupération des variables
+            $age = $request->request->get('age');
+            $poids = $request->request->get('poids');
+            $objectif_poids = $request->request->get('objectif_poids');
+            $taille = $request->request->get('taille');
+            $sexe = $request->request->get('sexe');
+            $profil_sportif = $request->request->get('profil_sportif');
+            $regexPoids = "/^[\d]+[\.|\,]{0,1}[\d]{0,2}$/";
+            $regexAge = "/^[\d]{0,2}$/";
 
-        // Regex de vérification de nombre à virgule ou non => pour le poids, taille, et age
-            $regex = '/^[\d]+[\.|\,]{0,1}[\d]{0,2}$/';
-            $regexAge = '/^[\d]+$/';
-        // Vérification Age
-            if($user->getAge() === '' || $user->getAge() === null){
-                if($age === '' || $age === null){
-                    return $this->json(['state'=>'erreur', 'message' => 'Age non renseigné', 'input' => '.ageInput']);
-                } else {
-                    if(preg_match($regexAge, $age)){
-                        $user->setAge($age);
+        /**
+         * Traitement des données
+         */
+            // Age
+                if($user->getAge() === null){
+                    if($age !== null && $age !== ''){
+                        if(preg_match($regexAge, $age)){
+                            $user->setAge($age);
+                        } else {
+                            return $this->json(['state'=>'erreur', 'message'=> 'Valeur du champs incorrecte', 'input' => '.ageInput']);
+                        }
                     } else {
-                        return $this->json(['state'=>'erreur', 'message' => 'Erreur dans l\'inscription de l\'âge.', 'input' => '.ageInput']);
+                        return $this->json(['state'=>'erreur', 'message'=> 'Votre champs est vide', 'input' => '.ageInput']);
                     }
                 }
-            }
 
-        // Vérification Poids 
-            if($recherche_inscription_poids === null){                      // si aucune inscription en base de données, on regarde la variable récupérée
-                if($poids === '' || $poids === null ){                      // Si la variable récupérée est null => erreur, donnée non renseignée
-                    return $this->json(['state'=>'erreur', 'message' => 'Poids non renseigné.', 'input' => '.poidsInput']);
-                } else {
-                    if(preg_match($regex, $poids)){    // Vérification de la validité de la valeur renseignée
-                        $nouvelle_inscription_mesure = new InscriptionMesure();
-                        $nouvelle_inscription_mesure->setDate($date);
-                        $nouvelle_inscription_mesure->setCm($poids);
-                        $nouvelle_inscription_mesure->setMesures($poidsMesure);
-                        $nouvelle_inscription_mesure->setUser($user);
-                        $em->persist($nouvelle_inscription_mesure);
+            // Poids 
+                $mesurePoids = $manager->getRepository(Mesures::class)->findOneBy(['name'=>'Poids']);
+                $recherche_inscription_poids = $manager->getRepository(InscriptionMesure::class)->findLastDataByUserAndMesure($user,$mesurePoids);
+                if($recherche_inscription_poids === null){
+                    if($poids !== null && $poids !== ''){
+                        if(preg_match($regexPoids, $poids)){
+                            $nouvelle_inscription_mesure = new InscriptionMesure();
+                            $nouvelle_inscription_mesure->setDate($date);
+                            $nouvelle_inscription_mesure->setCm($poids);
+                            $nouvelle_inscription_mesure->setMesures($mesurePoids);
+                            $nouvelle_inscription_mesure->setUser($user);
+                            $manager->persist($nouvelle_inscription_mesure);
+                        } else {
+                            return $this->json(['state'=>'erreur', 'message'=> 'Valeur du champs incorrecte', 'input' => '.poidsInput']);
+                        }
                     } else {
-                        return $this->json(['state'=>'erreur', 'message' => 'Erreur dans l\'inscription du poids.', 'input' => '.poidsInput']);
+                        return $this->json(['state'=>'erreur', 'message'=> 'Votre champs est vide', 'input' => '.poidsInput']);
                     }
                 }
-            }
+                
 
-        // Vérification Taille
-            if($recherche_inscription_taille === '' || $recherche_inscription_taille === null){ // si aucune inscription en base de données, on regarde la variable récupérée
-                if($taille === '' || $taille === null){                   // Si la variable récupérée est null => erreur, donnée non renseignée
-                    return $this->json(['state'=>'erreur', 'message' => 'Taille non renseigné.', 'input' => '.tailleInput']);
-                } else {
-                    if(preg_match($regex, $taille)){    // Vérification de la validité de la valeur renseignée
-                        $nouvelle_inscription_mesure = new InscriptionMesure();
-                        $nouvelle_inscription_mesure->setDate($date);
-                        $nouvelle_inscription_mesure->setCm($taille);
-                        $nouvelle_inscription_mesure->setMesures($tailleMesure);
-                        $nouvelle_inscription_mesure->setUser($user);
-                        $em->persist($nouvelle_inscription_mesure);
+            // objectif_poids
+                if($user->getWeightGoal() === null){
+                    if($objectif_poids !== null || $objectif_poids !== ''){
+                        if(preg_match($regexPoids, $objectif_poids)){
+                            $user->setWeightGoal($objectif_poids);
+                        } else {
+                            return $this->json(['state'=>'erreur', 'message'=> 'Valeur du champs incorrecte', 'input' => '.objectifPoidsInput']);
+                        }
                     } else {
-                        return $this->json(['state'=>'erreur', 'message' => 'Erreur dans l\'inscription de la taille.', 'input' => '.tailleInput']);
+                        return $this->json(['state'=>'erreur', 'message'=> 'Votre champs est vide', 'input' => '.objectifPoidsInput']);
                     }
                 }
-            }
 
-        
-
-        // Vérification du sexe
-            ($user->getSexe() === null)? $user->setSexe($genreSexe): '';
-
-        // Vérification profilSportif
-            ($user->getProfilSportif() === null)? $user->setProfilSportif($profil_sportif): '';
-
-        // Vérification finale avant enregistrement
-            if(($recherche_inscription_poids !== null || $poids !== null) && ($recherche_inscription_taille !== null || $taille !== null) && $user->getAge() !== null && $user->getSexe() !== null && $user->getProfilSportif() !== null){
-                $selectPoids = ($recherche_inscription_poids === null)? $poids : $recherche_inscription_poids->getCm();
-                $selectTaille = ($recherche_inscription_taille === null)? $taille : $recherche_inscription_taille->getCm();
-                $besoinCalorique = round($this->calculBesoinCaloriqueBase($user->getAge(), $user->getSexe(), $user->getProfilSportif(), $selectPoids, $selectTaille),2);
-                if($besoinCalorique === 0 || $besoinCalorique === null){
-                    $this->json(['state' => 'erreur', 'message' => 'Erreur dans le calcul des besoins calorique journalier.', 'input' => '.target_error_message']);
-                } else {
-                    $em->flush();
-                    $em->clear();
-                    return $this->json(['success' => 'Enregistrement effectué avec succès', 'besoinCalorique'=>$besoinCalorique]);
+            // taille
+                $mesureTaille = $manager->getRepository(Mesures::class)->findOneBy(['name'=>'Taille corps']);
+                $recherche_inscription_taille = $manager->getRepository(InscriptionMesure::class)->findLastDataByUserAndMesure($user,$mesureTaille);
+                if($recherche_inscription_taille === null){
+                    if($taille !== null && $taille !== ''){
+                        if(preg_match($regexPoids, $taille)){
+                            $nouvelle_inscription_mesure = new InscriptionMesure();
+                            $nouvelle_inscription_mesure->setDate($date);
+                            $nouvelle_inscription_mesure->setCm($taille);
+                            $nouvelle_inscription_mesure->setMesures($mesureTaille);
+                            $nouvelle_inscription_mesure->setUser($user);
+                            $manager->persist($nouvelle_inscription_mesure);
+                        } else {
+                            return $this->json(['state'=>'erreur', 'message'=> 'Valeur du champs incorrecte', 'input' => '.tailleInput']);
+                        }
+                    } else {
+                        return $this->json(['state'=>'erreur', 'message'=> 'Votre champs est vide', 'input' => '.tailleInput']);
+                    }
                 }
-            } else {
-                return $this->json(['erreur' => 'Une erreur est survenue, veuillez réessayer ultérieurement.']);
-            }
+
+            // Sexe 
+                if($user->getSexe() === null){
+                    if($sexe !== null && $sexe !== ""){
+                        $typeSexe = $manager->getRepository(Sexe::class)->findOneBy(['libelle'=>$sexe]);
+                        $user->setSexe($typeSexe);
+                    } else {
+                        return $this->json(['state'=>'erreur', 'message'=> 'Veuillez choisir entre homme ou femme', 'input' => '.fake-input']);
+                    }
+                }
+
+            // Profil Sportif
+                if($user->getProfilSportif() === null){
+                    if($profil_sportif === null || $profil_sportif === ''){
+                        return $this->json(['state'=>'erreur', 'message'=> 'Veuillez choisir parmis les profils sportifs', 'input' => '.target-error-message']);
+                    } else {
+                        $typeProfilSportif = $manager->getRepository(ProfilSportif::class)->findOneBy(['libelle'=>$profil_sportif]);
+                        $user->setProfilSportif($typeProfilSportif);
+                    }
+                }
+
+        /**
+         *  Validation 
+         */
+            $manager->flush();
+            $manager->clear();
+            return $this->json(['state'=>'success', 'message'=> 'Données enregistrées correctement', 'input' => '.modal-footer']);
     }
 
-    function calculBesoinCaloriqueBase($age, $genreSexe, $profil_sportif, $poids, $taille){
-        $resultat = 0;
-        if($genreSexe->getLibelle() === 'Homme'){
-            $resultat = (66.5 + (17.75 * $poids) + (5 * $taille) - (6.77 * $age)) * $profil_sportif->getValue();
-        } else if ($genreSexe->getLibelle() === 'Femme'){
-            $resultat = (655 + (9.56 * $poids) + (1.85 * $taille) - (4.67 * $age)) * $profil_sportif->getValue();
+    /**
+     * @Route("reload_info",name="reload_info",options={"expose"=true})
+     */
+    public function reloadInfo(Request $request){
+        $em = $this->getDoctrine()->getManager();
+        $user = $this->getUser();
+
+        // Recherche des dernieres mesures en taille et poids
+        $mesurePoids = $em->getRepository(Mesures::class)->findOneBy(['name'=>'Poids']);
+        $mesureTaille = $em->getRepository(Mesures::class)->findOneBy(['name'=>'Taille corps']);
+        $poids = $em->getRepository(InscriptionMesure::class)->findLastDataByUserAndMesure($user, $mesurePoids);
+        $taille = $em->getRepository(InscriptionMesure::class)->findLastDataByUserAndMesure($user, $mesureTaille);
+
+        $weightGoal = null;
+        $besoinCalorique = null;
+        $imc = null;
+        $mesure_restantes = 0;
+
+        // Chargement objectif poids
+            ($user->getWeightGoal() !== null)? $weightGoal = $user->getWeightGoal()  : '';
+
+        // Chargement des besoins calorique 
+            if(($user->getAge() !== null && $user->getAge() !== '') && ($user->getSexe() !== null && $user->getSexe() !== '') && ($user->getProfilSportif() !== null && $user->getProfilSportif() !== '') && ($poids !== null && $poids !== '') && ($taille !== null && $taille !== '')){
+                $besoinCalorique = round($this->calculBesoinCaloriqueBase($user->getAge(), $user->getSexe(), $user->getProfilSportif(), $poids->getCm(), $taille->getCm()),2);
+            }
+        // Chargemement IMC
+            ($poids !== null && $poids !== '' && $taille !== null && $taille !== '')? $imc = $this->imc($taille->getCm(), $poids->getCm()) : '';
+
+        // Chargement mesures restantes
+            $mesures_restantes = $this->mesuresRestantes();
+        // Retour 
+            return $this->json(['objPoids' => $weightGoal, 'besoinCal' => $besoinCalorique, 'imc' => $imc, 'mesuresRestante' => $mesures_restantes]);
+    }
+
+    // Fonction retournant toutes les mesures restantes à inscrire
+        function mesuresRestantes(){
+            $em = $this->getDoctrine()->getManager();
+            $user = $this->getUser();
+            $toutes_les_mesures = $em->getRepository(Mesures::class)->findAll();
+            $date_max = new \DateTime();
+            $timestamp_max = strtotime($date_max->format('Y-m-d'));
+            $une_semaine = 60*60*24*7;
+            $timestamp_semaine_derniere = $timestamp_max - $une_semaine;
+            $date_debut = new \DateTime();
+            date_timestamp_set($date_debut, $timestamp_semaine_derniere);
+            $mesure_restantes = 0;
+            
+            foreach($toutes_les_mesures as $mesure){
+                $inscription = $em->getRepository(InscriptionMesure::class)->findDataOneWeek($user, $mesure, $date_debut, $date_max);
+                if(!$inscription){
+                    $mesure_restantes++;
+                }
+            }
+
+            return $mesure_restantes;
         }
-        return $resultat;
-    }
+
+    // Fonction retournant le calcul des besoins calorique journaliers de base
+        function calculBesoinCaloriqueBase($age, $genreSexe, $profil_sportif, $poids, $taille){
+            $resultat = 0;
+            if($genreSexe->getLibelle() === 'Homme'){
+                $resultat = (66.5 + (13.75 * $poids) + (5 * $taille) - (6.77 * $age)) * $profil_sportif->getValue();
+            } else if ($genreSexe->getLibelle() === 'Femme'){
+                $resultat = (655 + (9.56 * $poids) + (1.85 * $taille) - (4.67 * $age)) * $profil_sportif->getValue();
+            }
+            return round($resultat,2);
+        }
+
+    // Fonction retournant le calcul de l'indice de masse corporelle
+        function imc($taille, $poids){
+            $tailleMetre = $taille / 100;
+            $calcul = $poids / ($tailleMetre * $tailleMetre);
+            $resultat = "";
+
+            switch($calcul){
+                case $calcul > 40: $resultat = 'Obésite morbide'; break;
+                case $calcul <= 40 && $calcul > 35: $resultat = 'Obésité (Classe 2)'; break;
+                case $calcul <= 35 && $calcul > 30: $resultat = 'Obésité (Classe 1)'; break;
+                case $calcul <= 30 && $calcul > 25: $resultat = 'Surpoids'; break;
+                case $calcul <= 25 && $calcul > 18.5: $resultat = 'Corpulence normale'; break;
+                case $calcul <= 18.5 && $calcul > 16: $resultat = 'Maigre'; break;
+                case $calcul < 16: $resultat = 'Dénitrie'; break;
+            }
+
+            return $resultat;
+            
+        }
 }
