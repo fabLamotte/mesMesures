@@ -78,7 +78,6 @@ class ProfilController extends AbstractController
             } else {
                 $datas['imc'] = null;
             }
-        
         return $this->render('profil/index.html.twig', [
             'user'              => $user,
             'datas'             => $datas,
@@ -277,7 +276,8 @@ class ProfilController extends AbstractController
             return $this->json(['besoinCal' => $besoinCalorique, 'imc' => $imc, 'mesuresRestante' => $mesuresRestantes, 'objPoids' => $objectifPoids, 'firstPoids' => $poidsBase, 'ActualPoids' => $poids->getCm(), 'coefPoids' => $coefPoids ]);
         }
 
-    // Fonction retournant toutes les mesures restantes à inscrire
+    
+        // Fonction retournant toutes les mesures restantes à inscrire
         function mesuresRestantes(){
             $em = $this->getDoctrine()->getManager();
             $user = $this->getUser();

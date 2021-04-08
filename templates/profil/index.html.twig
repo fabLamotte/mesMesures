@@ -40,7 +40,6 @@
           <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6 col-xs-12 p-2">
             <div class="d-flex flex-column align-items-center">
               <div class="text-white">Objectif poids</div>
-
                 {# Poids actuel #}
                 <div class="d-flex justify-content-center targetActualWeight">
                   {% if datas.weight_actual is defined and datas.weight_actual is not null %}
@@ -49,9 +48,7 @@
                     <div>0 kg</div>
                   {% endif %}
                 </div>
-
                 <div class="d-flex justify-content-center" style="width:100%;">
-
                   {# Premier poids #}
                   <div class="targetFirstWeight mr-2 d-flex align-items-end">
                     {% if datas.weight_first is defined and datas.weight_first is not null %}
@@ -60,7 +57,6 @@
                       <div>0 kg</div>
                     {% endif %}
                   </div>
-
                   {# Jauge objectif #}
                   <div class="gauge">
                     <div class="gauge__body">
@@ -68,7 +64,6 @@
                       <div class="gauge__cover"></div>
                     </div>
                   </div>
-
                   {# Poids Objectif #}
                   <div class="targetWeightGoal ml-2 d-flex align-items-end">
                     {% if datas.weight_goal is defined and datas.weight_goal is not null %}
@@ -80,7 +75,6 @@
                 </div>
               </div>
             </div>
-
         {# Mesures restantes #}
           <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6 col-xs-12 p-2">
             <div class="d-flex flex-column align-items-center text-center">
@@ -94,7 +88,6 @@
               </div>
             </div>
           </div>
-
         {# Calories quotidienne minimum #}  
           <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6 col-xs-12 p-2">
             <div class="d-flex flex-column align-items-center text-center">
@@ -108,7 +101,6 @@
               </div>
             </div>
           </div>
-
         {# IMC #}
           <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6 col-xs-12 p-2">
             <div class="d-flex flex-column align-items-center">
@@ -123,10 +115,12 @@
       </div>
     </section>
     <section class="m-0 p-0 bloc graph rounded col-12">
+      {% include 'profil/graph.html.twig' %}
     </section>
 {% endblock %}
-{% block javascripts %}
+{% block javascripts %}<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ asset('js/jquery.js') }}" type="text/javascript"></script>
+    {# script général #}
     <script>
       $(document).ready(function(){
         // Récupération de variable à traiter
@@ -147,7 +141,6 @@
             setGaugeValue(gaugeElement,coefGoalSelector);
           }
       });
-
       // Validation du formulaire "informations manquantes"
         $('#submitMissInfosForm').click(function(e){
           e.preventDefault();
@@ -186,8 +179,6 @@
             }
           });
         });
-
-
       // Gestion du switch entre homme et femme dans le formulaire
         $('.fake-input').click(function(){
           var thisSelector = $(this);
@@ -197,7 +188,6 @@
             thisSelector.addClass('active');
           }
         });
-      
       // Affichage des infobulles au survol
         $('.bloc-profil-sportif').mouseover(function(){
           var infobulle = $(this).find('.infobulle');
@@ -217,7 +207,6 @@
           $('input[name=profilSportif]').removeClass('checked');
           $(this).addClass('checked');
         });
-
       // Fonction de rechargement des informations
         function reloadInfo(){
           $.ajax({
@@ -251,7 +240,6 @@
             }
           });
         }
-
       // Fonction d'animation 
         function setGaugeValue(gauge, value) {
           if (value < 0 || value > 1) {
@@ -264,5 +252,25 @@
             value * 100
           )}%`;
         }
+    </script>
+    {# script de graph #}
+    <script type="text/javascript">
+      $(document).ready(function(){
+
+      });
+      var ctx = document.getElementById('myChart').getContext('2d');
+      var myChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+              labels: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin'],
+              datasets: [{
+                  data: [12, 19, 3, 5, 2, 3],
+                  borderColor: [
+                      'white',
+                  ],
+                  borderWidth: 1
+              }]
+          },
+      });
     </script>
 {% endblock %}

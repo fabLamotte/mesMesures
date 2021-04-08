@@ -45,6 +45,7 @@ class InscriptionMesureRepository extends ServiceEntityRepository
             ->orderBy('m.date', 'DESC')
             ->setParameter('user', $user)
             ->setParameter('mesure', $mesure)
+            ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult()
         ;
