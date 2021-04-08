@@ -34,6 +34,22 @@ class InscriptionMesureRepository extends ServiceEntityRepository
             ->getOneOrNullResult()
         ;
     }
+
+    /**
+     * Fonction retournant la derniere mesure de l'utilisateur dans la mesure concernée
+     */
+    public function findFirstDataByUserAndMesure($user, $mesure){
+        return $this->createQueryBuilder('m')
+            ->where('m.user = :user')
+            ->andWhere('m.mesures = :mesure')
+            ->orderBy('m.date', 'ASC')
+            ->setParameter('user', $user)
+            ->setParameter('mesure', $mesure)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult()
+        ;
+    }
     
     /**
      * Fonction retournant la mesure concernée si elle rentre dans la portion de date concernée

@@ -38,6 +38,7 @@ class ProfilController extends AbstractController
             $mesurePoids = $em->getRepository(Mesures::class)->findOneBy(['name'=>'Poids']);
             $mesureTaille = $em->getRepository(Mesures::class)->findOneBy(['name'=>'Taille corps']);
             $derniere_mesure_poids = $em->getRepository(InscriptionMesure::class)->findLastDataByUserAndMesure($user, $mesurePoids);
+            $premiere_mesure_poids = $em->getRepository(InscriptionMesure::class)->findFirstDataByUserAndMesure($user, $mesurePoids);
             $derniere_mesure_taille = $em->getRepository(InscriptionMesure::class)->findLastDataByUserAndMesure($user, $mesureTaille);
             $profilsportif = $em->getRepository(ProfilSportif::class)->findAll();
             $datas = [];
@@ -53,6 +54,9 @@ class ProfilController extends AbstractController
 
         // Recherche objectif poids      
             $datas['weight_goal'] = $user->getWeightGoal();
+            $datas['weight_first'] = $premiere_mesure_poids->getCm();
+            $datas['weight_actual'] = $derniere_mesure_poids->getCm();
+            $datas['weight_coefficient'] = $this->calculCoefWeight($user->getWeightGoal(), $premiere_mesure_poids->getCm(), $derniere_mesure_poids->getCm());
             
         // Recherche nombre de mesures restantes de la semaine
             $datas['nombre_mesures_restantes'] = $this->mesuresRestantes();
@@ -75,7 +79,7 @@ class ProfilController extends AbstractController
             'user'              => $user,
             'datas'             => $datas,
             'dataForgot'        => $dataForgots,
-            'profilsSportif'    => $profilsportif
+            'profilsSportif'    => $profilsportif,
         ]);
     }
 
@@ -318,5 +322,15 @@ class ProfilController extends AbstractController
             }
 
             return $resultat;
+        }
+
+    // Fonction retournant le calcul du coefficient poids 
+        function calculCoefWeight(float $obj, float $premier_poids, float $dernier_poids){
+            $resultat = 0;
+            $valeur_reference = $premier_poids - $obj;
+            $valeur_actuelle = $dernier_poids - $obj;
+            $resultat = (($valeur_actuelle - $valeur_reference) / $valeur_reference);
+
+            return round(abs($resultat),2);
         }
 }

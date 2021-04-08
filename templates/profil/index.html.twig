@@ -19,8 +19,14 @@
         .loading-bar:nth-child(2) {background-color: #a73e1c; animation-delay: 0.09s; }
         .loading-bar:nth-child(3) {background-color: #a73e1c; animation-delay: .18s; }
         .loading-bar:nth-child(4) { background-color: #a73e1c; animation-delay: .27s; }
+        .coefGoalSelector { font-size:18px; }
         @keyframes loading { 0% { transform: scale(1); } 20% { transform: scale(1, 2.2); } 40% { transform: scale(1); } }
         @media screen and (max-width: 575px){.carte .image { text-align:center; } }
+
+        .gauge { width: 100%; max-width: 100px; font-family: "gravtrac", sans-serif; font-size: 22px; color: white; }
+        .gauge__body { width: 100%; height: 0; padding-bottom: 50%; background: #22252C; position: relative; border-top-left-radius: 100% 200%; border-top-right-radius: 100% 200%; overflow: hidden; }
+        .gauge__fill { position: absolute; top: 100%; left: 0; width: inherit; height: 100%; background: #0a8002; transform-origin: center top; transform: rotate(0turn); transition: transform 0.2s ease-out; }
+        .gauge__cover { width: 75%; height: 150%; background: #3E4756; border-radius: 50%; position: absolute; top: 25%; left: 50%; transform: translateX(-50%); /* Text */ display: flex; align-items: center; justify-content: center; padding-bottom: 25%; box-sizing: border-box; }
     </style>
 {% endblock %}
 
@@ -33,12 +39,36 @@
           <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6 col-xs-12 p-2">
             <div class="d-flex flex-column align-items-center">
               <div class="text-white" >Objectif poids</div>
-              <div class="WeightGoalSelector" data-value="{{ datas.weight_goal }}">
+              {% if datas.weight_actual > datas.weight_first %}
+                <div class="actualGoal text-center" style="color:#ef0f12; font-size:18px;">
+                  {{ datas.weight_actual }} kg
+                </div>
+              {% else %}
+                <div class="actualGoal text-center" style="color:#0a8002; font-size:18px;">
+                  {{ datas.weight_actual }} kg
+                </div>
+              {% endif %}
+              <div class="coefGoalSelector d-flex justify-content-center align-items-end" style="width:100%;" data-value="{{ datas.weight_coefficient }}">
+
+                {% if datas.weight_actual is null %}
+                  0 kg
+                {% else %}
+                  <div class="targetWeightActual mr-2" data-value={{ datas.weight_first }}>{{ datas.weight_first }} kg</div>
+                {% endif %}
+
+                <div class="gauge">
+                  <div class="gauge__body">
+                    <div class="gauge__fill"></div>
+                    <div class="gauge__cover"></div>
+                  </div>
+                </div>
+
                 {% if datas.weight_goal is null %}
                   0 kg
                 {% else %}
-                  {{ datas.weight_goal }} kg
+                  <div class="targetWeightGoal ml-2" data-value={{ datas.weight_goal }}>{{ datas.weight_goal }} kg</div>
                 {% endif %}
+
               </div>
             </div>
           </div>
@@ -85,7 +115,6 @@
       </div>
     </section>
     <section class="m-0 p-0 bloc graph rounded col-12">
-      <p>qsd</p>
     </section>
 {% endblock %}
 {% block javascripts %}
@@ -93,13 +122,18 @@
     <script>
       $(document).ready(function(){
         // Récupération de variable à traiter
-          var weightGoalSelector = $('.WeightGoalSelector').attr('data-value');
+          var weightActualSelector = $('.targetWeightActual').attr('data-value');
+          var weightGoalSelector = $('.targetWeightGoal').attr('data-value');
+          var coefGoalSelector = $('.coefGoalSelector').attr('data-value');
           var mesureRestantes = $('.mesuresRestantesSelector').attr('data-value');
           var calorie = $('.calorieSelector').attr('data-value');
           var imc = $('.imcSelector').attr('data-value');
+          const gaugeElement = document.querySelector(".gauge");
           if(weightGoalSelector == '' || mesureRestantes == '' || calorie == '' || imc == ''){
             $('#forgotModal').trigger('click');
           }
+
+          setGaugeValue(gaugeElement,coefGoalSelector);
       });
 
       // Validation du formulaire "informations manquantes"
@@ -200,5 +234,19 @@
             }
           });
         }
+        function setGaugeValue(gauge, value) {
+          if (value < 0 || value > 1) {
+            return;
+          }
+
+          gauge.querySelector(".gauge__fill").style.transform = `rotate(${
+            value / 2
+          }turn)`;
+          gauge.querySelector(".gauge__cover").textContent = `${Math.round(
+            value * 100
+          )}%`;
+        }
+
+
     </script>
 {% endblock %}
