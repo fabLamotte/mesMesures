@@ -33,16 +33,15 @@ class ProfilController extends AbstractController
             } 
 
         // Connexion bdd
-        $em = $this->getDoctrine()->getManager();
-        $user = $this->getUser();
-        $toutes_les_mesures = $em->getRepository(Mesures::class)->findAll();
-        $mesurePoids = $em->getRepository(Mesures::class)->findOneBy(['name'=>'Poids']);
-        $mesureTaille = $em->getRepository(Mesures::class)->findOneBy(['name'=>'Taille corps']);
-        $derniere_mesure_poids = $em->getRepository(InscriptionMesure::class)->findLastDataByUserAndMesure($user, $mesurePoids);
-        $derniere_mesure_taille = $em->getRepository(InscriptionMesure::class)->findLastDataByUserAndMesure($user, $mesureTaille);
-        $profilsportif = $em->getRepository(ProfilSportif::class)->findAll();
-        $datas = [];
-        $dataForgots = [];
+            $em = $this->getDoctrine()->getManager();
+            $user = $this->getUser();
+            $mesurePoids = $em->getRepository(Mesures::class)->findOneBy(['name'=>'Poids']);
+            $mesureTaille = $em->getRepository(Mesures::class)->findOneBy(['name'=>'Taille corps']);
+            $derniere_mesure_poids = $em->getRepository(InscriptionMesure::class)->findLastDataByUserAndMesure($user, $mesurePoids);
+            $derniere_mesure_taille = $em->getRepository(InscriptionMesure::class)->findLastDataByUserAndMesure($user, $mesureTaille);
+            $profilsportif = $em->getRepository(ProfilSportif::class)->findAll();
+            $datas = [];
+            $dataForgots = [];
 
         // Stockage des données manquantes à remplir
             ($user->getWeightGoal() === null || $user->getWeightGoal() === '')? $dataForgots[] = 'ObjectifPoids' : '';      // Objectif Poids
@@ -55,22 +54,14 @@ class ProfilController extends AbstractController
         // Recherche objectif poids      
             $datas['weight_goal'] = $user->getWeightGoal();
             
-        // Recherche nombre de mesures restantes
-            $nb_mesures_restantes = 0;
-            $nb_max_mesures = count($toutes_les_mesures);
-            foreach($toutes_les_mesures as $mesure){
-                $m = $em->getRepository(InscriptionMesure::class)->findLastDataByUserAndMesure($user, $mesure);
-                if(!$m){
-                    $nb_mesures_restantes++;
-                }
-            }
-            $datas['nombre_mesures_restantes'] = $nb_mesures_restantes++;
+        // Recherche nombre de mesures restantes de la semaine
+            $datas['nombre_mesures_restantes'] = $this->mesuresRestantes();
 
         // Recherche besoins caloriques de base
             if($user->getAge() === null || $user->getAge() === '' || $user->getSexe() === null || $user->getSexe() === '' || $user->getProfilSportif() === null || $user->getProfilSportif() === '' || $derniere_mesure_poids === null || $derniere_mesure_poids === "" || $derniere_mesure_taille === null || $derniere_mesure_taille === ""){
                 $datas['besoin_calorique_de_base'] = null;
             } else {
-                $datas['besoin_calorique_de_base'] = $this->calculBesoinCaloriqueBase($user->getAge(), $user->getSexe(), $user->getProfilSportif(), $derniere_mesure_taille->getCm(), $derniere_mesure_poids->getCm());
+                $datas['besoin_calorique_de_base'] = $this->calculBesoinCaloriqueBase($user->getAge(), $user->getSexe()->getLibelle(), $user->getProfilSportif()->getValue(), $derniere_mesure_poids->getCm(), $derniere_mesure_taille->getCm());
             }
 
         // Recherche IMC
@@ -256,20 +247,21 @@ class ProfilController extends AbstractController
         $weightGoal = null;
         $besoinCalorique = null;
         $imc = null;
-        $mesure_restantes = 0;
 
         // Chargement objectif poids
             ($user->getWeightGoal() !== null)? $weightGoal = $user->getWeightGoal()  : '';
 
         // Chargement des besoins calorique 
             if(($user->getAge() !== null && $user->getAge() !== '') && ($user->getSexe() !== null && $user->getSexe() !== '') && ($user->getProfilSportif() !== null && $user->getProfilSportif() !== '') && ($poids !== null && $poids !== '') && ($taille !== null && $taille !== '')){
-                $besoinCalorique = round($this->calculBesoinCaloriqueBase($user->getAge(), $user->getSexe(), $user->getProfilSportif(), $poids->getCm(), $taille->getCm()),2);
+                $besoinCalorique = $this->calculBesoinCaloriqueBase($user->getAge(), $user->getSexe()->getLibelle(), $user->getProfilSportif()->getValue(), $poids->getCm(), $taille->getCm());
             }
+
         // Chargemement IMC
             ($poids !== null && $poids !== '' && $taille !== null && $taille !== '')? $imc = $this->imc($taille->getCm(), $poids->getCm()) : '';
 
         // Chargement mesures restantes
             $mesures_restantes = $this->mesuresRestantes();
+
         // Retour 
             return $this->json(['objPoids' => $weightGoal, 'besoinCal' => $besoinCalorique, 'imc' => $imc, 'mesuresRestante' => $mesures_restantes]);
     }
@@ -279,13 +271,14 @@ class ProfilController extends AbstractController
             $em = $this->getDoctrine()->getManager();
             $user = $this->getUser();
             $toutes_les_mesures = $em->getRepository(Mesures::class)->findAll();
-            $date_max = new \DateTime();
-            $timestamp_max = strtotime($date_max->format('Y-m-d'));
-            $une_semaine = 60*60*24*7;
-            $timestamp_semaine_derniere = $timestamp_max - $une_semaine;
-            $date_debut = new \DateTime();
-            date_timestamp_set($date_debut, $timestamp_semaine_derniere);
             $mesure_restantes = 0;
+            // Manipulation des dates
+                $date_max = new \DateTime();
+                $timestamp_max = strtotime($date_max->format('Y-m-d'));
+                $une_semaine = 60*60*24*7;
+                $timestamp_semaine_derniere = $timestamp_max - $une_semaine;
+                $date_debut = new \DateTime();
+                date_timestamp_set($date_debut, $timestamp_semaine_derniere);
             
             foreach($toutes_les_mesures as $mesure){
                 $inscription = $em->getRepository(InscriptionMesure::class)->findDataOneWeek($user, $mesure, $date_debut, $date_max);
@@ -298,18 +291,18 @@ class ProfilController extends AbstractController
         }
 
     // Fonction retournant le calcul des besoins calorique journaliers de base
-        function calculBesoinCaloriqueBase($age, $genreSexe, $profil_sportif, $poids, $taille){
+        function calculBesoinCaloriqueBase(int $age, String $genreSexe, float $profil_sportif, float $poids, float $taille){
             $resultat = 0;
-            if($genreSexe->getLibelle() === 'Homme'){
-                $resultat = (66.5 + (13.75 * $poids) + (5 * $taille) - (6.77 * $age)) * $profil_sportif->getValue();
-            } else if ($genreSexe->getLibelle() === 'Femme'){
-                $resultat = (655 + (9.56 * $poids) + (1.85 * $taille) - (4.67 * $age)) * $profil_sportif->getValue();
+            if($genreSexe === 'Homme'){
+                $resultat = (66.5 + (13.75 * $poids) + (5 * $taille) - (6.77 * $age)) * $profil_sportif;
+            } else if ($genreSexe === 'Femme'){
+                $resultat = (655 + (9.56 * $poids) + (1.85 * $taille) - (4.67 * $age)) * $profil_sportif;
             }
             return round($resultat,2);
         }
 
     // Fonction retournant le calcul de l'indice de masse corporelle
-        function imc($taille, $poids){
+        function imc(float $taille, float $poids){
             $tailleMetre = $taille / 100;
             $calcul = $poids / ($tailleMetre * $tailleMetre);
             $resultat = "";
@@ -321,10 +314,9 @@ class ProfilController extends AbstractController
                 case $calcul <= 30 && $calcul > 25: $resultat = 'Surpoids'; break;
                 case $calcul <= 25 && $calcul > 18.5: $resultat = 'Corpulence normale'; break;
                 case $calcul <= 18.5 && $calcul > 16: $resultat = 'Maigre'; break;
-                case $calcul < 16: $resultat = 'Dénitrie'; break;
+                case $calcul < 16: $resultat = 'Dénutrie'; break;
             }
 
             return $resultat;
-            
         }
 }
