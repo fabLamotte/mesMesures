@@ -37,8 +37,8 @@ class ProfilController extends AbstractController
             $user = $this->getUser();
             $mesurePoids = $em->getRepository(Mesures::class)->findOneBy(['name'=>'Poids']);
             $mesureTaille = $em->getRepository(Mesures::class)->findOneBy(['name'=>'Taille corps']);
-            $derniere_mesure_poids = $em->getRepository(InscriptionMesure::class)->findLastDataByUserAndMesure($user, $mesurePoids);
             $premiere_mesure_poids = $em->getRepository(InscriptionMesure::class)->findFirstDataByUserAndMesure($user, $mesurePoids);
+            $derniere_mesure_poids = $em->getRepository(InscriptionMesure::class)->findLastDataByUserAndMesure($user, $mesurePoids);
             $derniere_mesure_taille = $em->getRepository(InscriptionMesure::class)->findLastDataByUserAndMesure($user, $mesureTaille);
             $profilsportif = $em->getRepository(ProfilSportif::class)->findAll();
             $datas = [];
@@ -52,11 +52,15 @@ class ProfilController extends AbstractController
             ($user->getSexe() === null || $user->getSexe() === '')? $dataForgots[] = 'Sexe' : '';                           // Sexe
             ($user->getProfilSportif() === null || $user->getProfilSportif() === '')? $dataForgots[] = 'ProfilSportif' : '';// profilSportif
 
-        // Recherche objectif poids      
-            $datas['weight_goal'] = $user->getWeightGoal();
-            $datas['weight_first'] = $premiere_mesure_poids->getCm();
-            $datas['weight_actual'] = $derniere_mesure_poids->getCm();
-            $datas['weight_coefficient'] = $this->calculCoefWeight($user->getWeightGoal(), $premiere_mesure_poids->getCm(), $derniere_mesure_poids->getCm());
+        // Recherche objectif poids  
+            ($user->getWeightGoal() !== null)? $datas['weight_goal'] = $user->getWeightGoal() : $datas['weight_goal'] = null;    
+            ($premiere_mesure_poids !== null)? $datas['weight_first'] = $premiere_mesure_poids->getCm() : $datas['weight_first'] = null;
+            ($derniere_mesure_poids !== null)? $datas['weight_actual'] = $derniere_mesure_poids->getCm() : $datas['weight_actual'] = null;
+            if($premiere_mesure_poids !== null && $derniere_mesure_poids !== null){
+                $datas['weight_coefficient'] = $this->calculCoefWeight($user->getWeightGoal(), $premiere_mesure_poids->getCm(), $derniere_mesure_poids->getCm());
+            } else {
+                $datas['weight_coefficient'] = null;
+            }
             
         // Recherche nombre de mesures restantes de la semaine
             $datas['nombre_mesures_restantes'] = $this->mesuresRestantes();
@@ -239,36 +243,39 @@ class ProfilController extends AbstractController
      * @Route("reload_info",name="reload_info",options={"expose"=true})
      */
     public function reloadInfo(Request $request){
-        $em = $this->getDoctrine()->getManager();
-        $user = $this->getUser();
+        // Connexion et récupération user
+            $em = $this->getDoctrine()->getManager();
+            $user = $this->getUser();
 
         // Recherche des dernieres mesures en taille et poids
-        $mesurePoids = $em->getRepository(Mesures::class)->findOneBy(['name'=>'Poids']);
-        $mesureTaille = $em->getRepository(Mesures::class)->findOneBy(['name'=>'Taille corps']);
-        $poids = $em->getRepository(InscriptionMesure::class)->findLastDataByUserAndMesure($user, $mesurePoids);
-        $taille = $em->getRepository(InscriptionMesure::class)->findLastDataByUserAndMesure($user, $mesureTaille);
+            $mesurePoids = $em->getRepository(Mesures::class)->findOneBy(['name'=>'Poids']);
+            $mesureTaille = $em->getRepository(Mesures::class)->findOneBy(['name'=>'Taille corps']);
+            $poids = $em->getRepository(InscriptionMesure::class)->findLastDataByUserAndMesure($user, $mesurePoids); // Derniere inscription poids
+            $taille = $em->getRepository(InscriptionMesure::class)->findLastDataByUserAndMesure($user, $mesureTaille); // Derniere inscription taille
+    
+        // Recherche de la mesure la plus recente en poids
+            $premier_poids = $em->getRepository(InscriptionMesure::class)->findFirstDataByUserAndMesure($user, $mesurePoids);
 
-        $weightGoal = null;
-        $besoinCalorique = null;
-        $imc = null;
+        // Initialisation autres variable
+            $besoinCalorique = null;
+            $imc = null;
+            $objectifPoids = null;
+            $poidsBase = null;
+            $coefPoids = null;
 
-        // Chargement objectif poids
-            ($user->getWeightGoal() !== null)? $weightGoal = $user->getWeightGoal()  : '';
-
-        // Chargement des besoins calorique 
-            if(($user->getAge() !== null && $user->getAge() !== '') && ($user->getSexe() !== null && $user->getSexe() !== '') && ($user->getProfilSportif() !== null && $user->getProfilSportif() !== '') && ($poids !== null && $poids !== '') && ($taille !== null && $taille !== '')){
+        // Besoin calorique
+            if(($user->getAge() !== null && $user->getAge() !== '') && $user->getSexe() !== null && $user->getProfilSportif() !== null && $poids !== null && $taille !== null){
                 $besoinCalorique = $this->calculBesoinCaloriqueBase($user->getAge(), $user->getSexe()->getLibelle(), $user->getProfilSportif()->getValue(), $poids->getCm(), $taille->getCm());
             }
-
-        // Chargemement IMC
-            ($poids !== null && $poids !== '' && $taille !== null && $taille !== '')? $imc = $this->imc($taille->getCm(), $poids->getCm()) : '';
-
-        // Chargement mesures restantes
-            $mesures_restantes = $this->mesuresRestantes();
-
-        // Retour 
-            return $this->json(['objPoids' => $weightGoal, 'besoinCal' => $besoinCalorique, 'imc' => $imc, 'mesuresRestante' => $mesures_restantes]);
-    }
+            ($poids !== null && $taille !== null)? $imc = $this->imc($taille->getCm(), $poids->getCm()): ''; // IMC
+            $mesuresRestantes = $this->mesuresRestantes();  // Mesures restantes
+            ($user->getWeightGoal() !== null)? $objectifPoids = $user->getWeightGoal() : '';    // Objectif poids
+            ($premier_poids !== null)? $poidsBase = $premier_poids->getCm(): '';    // Premiere inscription  poids
+            ($objectifPoids !== null && $poidsBase !== null && $poids !== null)? $coefPoids = $this->calculCoefWeight($objectifPoids, $poidsBase, $poids->getCm()) : ''; // Calcul coef poids
+    
+        // Retour
+            return $this->json(['besoinCal' => $besoinCalorique, 'imc' => $imc, 'mesuresRestante' => $mesuresRestantes, 'objPoids' => $objectifPoids, 'firstPoids' => $poidsBase, 'ActualPoids' => $poids->getCm(), 'coefPoids' => $coefPoids ]);
+        }
 
     // Fonction retournant toutes les mesures restantes à inscrire
         function mesuresRestantes(){

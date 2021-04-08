@@ -23,6 +23,7 @@
         @keyframes loading { 0% { transform: scale(1); } 20% { transform: scale(1, 2.2); } 40% { transform: scale(1); } }
         @media screen and (max-width: 575px){.carte .image { text-align:center; } }
 
+        .targetFirstWeight, .targetActualWeight, .targetWeightGoal { font-size:18px; }
         .gauge { width: 100%; max-width: 100px; font-family: "gravtrac", sans-serif; font-size: 22px; color: white; }
         .gauge__body { width: 100%; height: 0; padding-bottom: 50%; background: #22252C; position: relative; border-top-left-radius: 100% 200%; border-top-right-radius: 100% 200%; overflow: hidden; }
         .gauge__fill { position: absolute; top: 100%; left: 0; width: inherit; height: 100%; background: #0a8002; transform-origin: center top; transform: rotate(0turn); transition: transform 0.2s ease-out; }
@@ -38,40 +39,47 @@
         {# POIDS #}
           <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6 col-xs-12 p-2">
             <div class="d-flex flex-column align-items-center">
-              <div class="text-white" >Objectif poids</div>
-              {% if datas.weight_actual > datas.weight_first %}
-                <div class="actualGoal text-center" style="color:#ef0f12; font-size:18px;">
-                  {{ datas.weight_actual }} kg
-                </div>
-              {% else %}
-                <div class="actualGoal text-center" style="color:#0a8002; font-size:18px;">
-                  {{ datas.weight_actual }} kg
-                </div>
-              {% endif %}
-              <div class="coefGoalSelector d-flex justify-content-center align-items-end" style="width:100%;" data-value="{{ datas.weight_coefficient }}">
+              <div class="text-white">Objectif poids</div>
 
-                {% if datas.weight_actual is null %}
-                  0 kg
-                {% else %}
-                  <div class="targetWeightActual mr-2" data-value={{ datas.weight_first }}>{{ datas.weight_first }} kg</div>
-                {% endif %}
+                {# Poids actuel #}
+                <div class="d-flex justify-content-center targetActualWeight">
+                  {% if datas.weight_actual is defined and datas.weight_actual is not null %}
+                    <div>{{ datas.weight_actual }} kg</div>
+                  {% else %}
+                    <div>0 kg</div>
+                  {% endif %}
+                </div>
 
-                <div class="gauge">
-                  <div class="gauge__body">
-                    <div class="gauge__fill"></div>
-                    <div class="gauge__cover"></div>
+                <div class="d-flex justify-content-center" style="width:100%;">
+
+                  {# Premier poids #}
+                  <div class="targetFirstWeight mr-2 d-flex align-items-end">
+                    {% if datas.weight_first is defined and datas.weight_first is not null %}
+                      <div>{{ datas.weight_first }} kg</div> 
+                    {% else %}
+                      <div>0 kg</div>
+                    {% endif %}
+                  </div>
+
+                  {# Jauge objectif #}
+                  <div class="gauge">
+                    <div class="gauge__body">
+                      <div class="gauge__fill"></div>
+                      <div class="gauge__cover"></div>
+                    </div>
+                  </div>
+
+                  {# Poids Objectif #}
+                  <div class="targetWeightGoal ml-2 d-flex align-items-end">
+                    {% if datas.weight_goal is defined and datas.weight_goal is not null %}
+                      {{ datas.weight_first }} kg
+                    {% else %}
+                      0 kg
+                    {% endif %}
                   </div>
                 </div>
-
-                {% if datas.weight_goal is null %}
-                  0 kg
-                {% else %}
-                  <div class="targetWeightGoal ml-2" data-value={{ datas.weight_goal }}>{{ datas.weight_goal }} kg</div>
-                {% endif %}
-
               </div>
             </div>
-          </div>
 
         {# Mesures restantes #}
           <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6 col-xs-12 p-2">
@@ -79,9 +87,9 @@
               <div class="text-white">Mesures restantes</div>
               <div class="mesuresRestantesSelector" data-value="{{ datas.nombre_mesures_restantes }}">
                 {% if datas.nombre_mesures_restantes is null %}
-                  0 restantes
+                  <div>0 restantes</div>
                 {% else %}
-                  {{ datas.nombre_mesures_restantes }} restantes
+                  <div>{{ datas.nombre_mesures_restantes }} restantes</div>
                 {% endif %}
               </div>
             </div>
@@ -133,7 +141,11 @@
             $('#forgotModal').trigger('click');
           }
 
-          setGaugeValue(gaugeElement,coefGoalSelector);
+          if(coefGoalSelector === null || coefGoalSelector === "" || coefGoalSelector === undefined){
+            setGaugeValue(gaugeElement, 0);
+          } else {
+            setGaugeValue(gaugeElement,coefGoalSelector);
+          }
       });
 
       // Validation du formulaire "informations manquantes"
@@ -229,16 +241,22 @@
 
               // Affichage de l'objectif poids
                 if(response['objPoids'] !== null){
-                  $('.WeightGoalSelector').empty().append(response['objPoids']);
+                  $('.targetActualWeight').empty().append(response['ActualPoids'] + ' kg');
+                  $('.targetFirstWeight').empty().append(response['firstPoids'] + ' kg');
+                  $('.targetWeightGoal').empty().append(response['objPoids'] + ' kg');
+                  var coefPoids = response['coefPoids'];
+                  const gaugeElement = document.querySelector(".gauge");
+                  setGaugeValue(gaugeElement, coefPoids);
                 }
             }
           });
         }
+
+      // Fonction d'animation 
         function setGaugeValue(gauge, value) {
           if (value < 0 || value > 1) {
             return;
           }
-
           gauge.querySelector(".gauge__fill").style.transform = `rotate(${
             value / 2
           }turn)`;
@@ -246,7 +264,5 @@
             value * 100
           )}%`;
         }
-
-
     </script>
 {% endblock %}

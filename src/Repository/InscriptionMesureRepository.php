@@ -26,7 +26,7 @@ class InscriptionMesureRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('m')
             ->where('m.user = :user')
             ->andWhere('m.mesures = :mesure')
-            ->orderBy('m.date', 'DESC')
+            ->orderBy('m.date', 'ASC')
             ->setParameter('user', $user)
             ->setParameter('mesure', $mesure)
             ->setMaxResults(1)
@@ -42,10 +42,9 @@ class InscriptionMesureRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('m')
             ->where('m.user = :user')
             ->andWhere('m.mesures = :mesure')
-            ->orderBy('m.date', 'ASC')
+            ->orderBy('m.date', 'DESC')
             ->setParameter('user', $user)
             ->setParameter('mesure', $mesure)
-            ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult()
         ;
@@ -63,7 +62,6 @@ class InscriptionMesureRepository extends ServiceEntityRepository
             ->setParameter('mesure', $mesure)
             ->setParameter('debut', $debut)
             ->setParameter('max', $max)
-            ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult()
         ;
